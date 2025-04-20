@@ -3,6 +3,8 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const { poolPromise } = require('./config/db'); // Import poolPromise
+console.log('poolPromise:', poolPromise); // Add this line
 const taskRoutes = require('./routes/taskRoutes');
 const app = express();
 app.use(express.json()); 
@@ -13,6 +15,17 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
   });
   
+  app.get('/api/games', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request().query('SELECT * FROM Game_Catalogue');
+        res.json(result.recordset); // Return the list of games
+    } catch (err) {
+        console.error('Error fetching games:', err);
+        res.status(500).json({ error: 'Failed to fetch games' });
+    }
+});
+
 
 const PORT = 5000;
 
