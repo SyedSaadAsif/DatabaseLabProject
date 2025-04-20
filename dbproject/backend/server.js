@@ -26,6 +26,144 @@ app.use((err, req, res, next) => {
     }
 });
 
+// Signup API
+app.post('/api/signup', async (req, res) => {
+    const { username, password, email, date_of_birth } = req.body;
+    // Debugging: Log incoming request body
+    console.log("Signup Request Body:", req.body);
+
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('username', username)
+            .input('password', password)
+            .input('email', email)
+            .input('date_of_birth', date_of_birth)
+            .execute('Signup');
+        
+        res.status(201).json({ message: 'User signed up successfully' });
+    } catch (err) {
+        console.log(username, password, email, date_of_birth);
+        console.error('Error during signup:', err);
+        res.status(500).json({ error: 'Failed to sign up' });
+    }
+});
+// Login API
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('username', username)
+            .input('password', password)
+            .execute('Login');
+        if (result.recordset.length > 0) {
+            res.json({ userId: result.recordset[0].User_ID });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
+    } catch (err) {
+        console.error('Error during login:', err);
+        res.status(500).json({ error: 'Failed to log in' });
+    }
+});
+
+// Library View API
+app.get('/api/library/:userID', async (req, res) => {
+    const { userID } = req.params;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('userID', userID)
+            .execute('Library_view');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error fetching library:', err);
+        res.status(500).json({ error: 'Failed to fetch library' });
+    }
+});
+
+// Search Game API
+app.get('/api/search', async (req, res) => {
+    const { rating, publisher_id, price } = req.query;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('rating', rating || null)
+            .input('publisher_id', publisher_id || null)
+            .input('price', price || null)
+            .execute('Search_Game');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error searching games:', err);
+        res.status(500).json({ error: 'Failed to search games' });
+    }
+});
+
+// Purchase API
+app.post('/api/purchase', async (req, res) => {
+    const { userID, gameID } = req.body;
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('userID', userID)
+            .input('gameID', gameID)
+            .execute('Purchase');
+        res.status(200).json({ message: 'Game purchased successfully' });
+    } catch (err) {
+        console.error('Error during purchase:', err);
+        res.status(500).json({ error: 'Failed to purchase game' });
+    }
+});
+
+// Add to Cart API
+app.post('/api/cart', async (req, res) => {
+    const { userID, gameID } = req.body;
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('UserID', userID)
+            .input('GameID', gameID)
+            .execute('AddToCart');
+        res.status(200).json({ message: 'Game added to cart successfully' });
+    } catch (err) {
+        console.error('Error adding to cart:', err);
+        res.status(500).json({ error: 'Failed to add to cart' });
+    }
+});
+
+// View Game Details API
+app.get('/api/game/:gameID', async (req, res) => {
+    const { gameID } = req.params;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('GameID', gameID)
+            .execute('ViewGameDetails');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        console.error('Error fetching game details:', err);
+        res.status(500).json({ error: 'Failed to fetch game details' });
+    }
+});
+
+// Add Review API
+app.post('/api/review', async (req, res) => {
+    const { userID, gameID, comment, commentDate } = req.body;
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('UserID', userID)
+            .input('GameID', gameID)
+            .input('Comment', comment)
+            .input('CommentDate', commentDate)
+            .execute('AddReview');
+        res.status(201).json({ message: 'Review added successfully' });
+    } catch (err) {
+        console.error('Error adding review:', err);
+        res.status(500).json({ error: 'Failed to add review' });
+    }
+});
 
 const PORT = 5000;
 
