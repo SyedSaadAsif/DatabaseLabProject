@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const sql = require('mssql');
 const { poolPromise } = require('./config/db'); // Import poolPromise
 console.log('poolPromise:', poolPromise); // Add this line
 const taskRoutes = require('./routes/taskRoutes');
@@ -164,6 +165,121 @@ app.post('/api/review', async (req, res) => {
         res.status(500).json({ error: 'Failed to add review' });
     }
 });
+
+// Update User Profile
+app.put('/api/user/profile', async (req, res) => {
+    const { userID, newUsername, newEmail, newPassword, newProfileImage } = req.body;
+
+    try {
+        const pool = await poolPromise; // Wait for the database connection pool
+        const result = await pool.request()
+            .input('User_ID', sql.Int, userID)
+            .input('NewUsername', sql.VarChar, newUsername || null)
+            .input('NewEmail', sql.VarChar, newEmail || null)
+            .input('NewPassword', sql.VarChar, newPassword || null)
+            .input('NewProfileImage', sql.VarChar, newProfileImage || null)
+            .execute('UpdateUserProfile'); // Call the stored procedure
+
+        res.json({ message: 'User profile updated successfully' });
+    } catch (err) {
+        console.error('Error updating user profile:', err);
+        res.status(500).json({ error: 'Failed to update user profile' });
+    }
+});
+
+// Add Funds to Wallet
+app.post('/api/user/wallet', async (req, res) => {
+    const { userID, amount } = req.body;
+
+    try {
+        const pool = await poolPromise; 
+        const result = await pool.request()
+            .input('UserID', sql.Int, userID)
+            .input('Amount', sql.Int, amount)
+            .execute('AddFundsToWallet');  
+        res.json({ message: 'Funds added to wallet successfully' });
+    } catch (err) {
+        console.error('Error adding funds to wallet:', err);
+        res.status(500).json({ error: 'Failed to add funds to wallet' });
+    }
+});
+
+// Remove Game from Cart
+app.delete('/api/cart', async (req, res) => {
+    const { userID, gameID } = req.body;
+
+    try {
+        const pool = await poolPromise; 
+        const result = await pool.request()
+            .input('User_ID', sql.Int, userID)
+            .input('Game_ID', sql.Int, gameID)
+            .execute('RemoveGameFromCart'); 
+
+        const message = result.recordset.length > 0 ? result.recordset[0].message : 'No message returned';
+
+        res.json({ message }); 
+    } catch (err) {
+        console.error('Error removing game from cart:', err);
+        res.status(500).json({ error: 'Failed to remove game from cart' });
+    }
+});
+             
+// View User's Purchase History
+app.get('/api/user/purchase-history/:userID', async (req, res) => {
+    const { userID } = req.params;
+
+    try {
+        const pool = await poolPromise; 
+        const result = await pool.request()
+            .input('User_ID', sql.Int, userID)
+            .execute('ViewPurchaseHistory');
+
+        // If purchase history is empty
+        if (result.recordset.length === 0) {
+            res.json({ message: 'No purchase history found for this user.' });
+        } else {
+            res.json(result.recordset); // Return the actual purchase history details
+        }
+    } catch (err) {
+        console.error('Error fetching purchase history:', err);
+        res.status(500).json({ error: 'Failed to fetch purchase history' });
+    }
+});
+
+// Remove Review
+app.delete('/api/review', async (req, res) => {
+    const { userID, gameID } = req.body;
+
+    try {
+        const pool = await poolPromise; 
+        const result = await pool.request()
+            .input('User_ID', sql.Int, userID)
+            .input('Game_ID', sql.Int, gameID)
+            .execute('RemoveReview');
+
+        
+        const message = result.recordset.length > 0 ? result.recordset[0].message : 'No message returned';
+
+        res.json({ message });
+    } catch (err) {
+        console.error('Error removing review:', err);
+        res.status(500).json({ error: 'Failed to remove review' });
+    }
+});
+
+// Fetch All Games from View_All_Games
+app.get('/api/games/all', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request().query('SELECT * FROM View_All_Games'); 
+        res.json(result.recordset); 
+    } catch (err) {
+        console.error('Error fetching all games:', err);
+        res.status(500).json({ error: 'Failed to fetch all games' });
+    }
+});
+
+
 
 const PORT = 5000;
 
