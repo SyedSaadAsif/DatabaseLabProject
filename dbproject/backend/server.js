@@ -251,6 +251,31 @@ app.get('/api/user/purchase-history/:userID', async (req, res) => {
     }
 });
 
+// View User Profile API
+app.get('/api/user/profile/:userID', async (req, res) => {
+    const { userID } = req.params;
+
+    try {
+        const pool = await poolPromise; // Wait for the database connection pool
+        const result = await pool.request()
+            .input('User_ID', sql.Int, userID) // Pass the User_ID as input
+            .execute('ViewUserProfile'); // Call the stored procedure
+
+        // Check if the procedure returned a message or user profile details
+        if (result.recordset.length === 1 && result.recordset[0].message) {
+            // Return the message if the user is not found
+            res.json({ message: result.recordset[0].message });
+        } else {
+            // Return the user's profile details
+            res.json(result.recordset[0]);
+        }
+    } catch (err) {
+        console.error('Error fetching user profile:', err);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
+
 // Remove Review
 app.delete('/api/review', async (req, res) => {
     const { userID, gameID } = req.body;

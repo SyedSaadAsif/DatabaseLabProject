@@ -475,9 +475,8 @@ function Homepage() {
       icon.classList.add('fa-regular'); // Add the regular class
     }
   }}
-  onClick={() => {
-    console.log('Navigate to user settings');
-  }}
+  onClick={() => navigate('/user-profile')} // Navigate to the user profile page
+
 >
   <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
 </button>
@@ -1414,7 +1413,7 @@ function Library() {
                 icon.classList.add('fa-regular');
               }
             }}
-            onClick={() => console.log('Navigate to user settings')}
+            onClick={() => navigate('/user-profile')}
           >
             <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
           </button>
@@ -1667,6 +1666,393 @@ function Library() {
   );
 }
 
+function UserProfile() {
+  const [userProfile, setUserProfile] = useState({
+      username: '',
+      photo: '',
+      accountLevel: '',
+      password: '',
+      email: '',
+      birthDate: '',
+      wallet: 0,
+  }); // User profile data
+  const [newFunds, setNewFunds] = useState(0); // Amount to add to wallet
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId'); // Get logged-in user's ID from localStorage
+
+  // Fetch user profile from the backend
+  useEffect(() => {
+      const fetchUserProfile = async () => {
+          try {
+              const response = await fetch(`http://localhost:5000/api/user/profile/${userId}`);
+              if (!response.ok) {
+                  throw new Error('Failed to fetch user profile');
+              }
+              const data = await response.json();
+              setUserProfile({
+                  username: data.username,
+                  photo: `/images/${data.user_profile_image}`, // Use the image path from the database
+                  accountLevel: data.account_level,
+                  password: '********', // Mask the password
+                  email: data.email,
+                  birthDate: data.date_of_birth,
+                  wallet: data.wallet,
+              });
+          } catch (error) {
+              console.error('Error fetching user profile:', error);
+          }
+      };
+
+      if (userId) {
+          fetchUserProfile();
+      }
+  }, [userId]);
+
+  // Handle profile updates
+  const handleProfileUpdate = async () => {
+      try {
+          const response = await fetch('http://localhost:5000/api/user/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  userID: userId,
+                  newUsername: userProfile.username,
+                  newEmail: userProfile.email,
+                  newPassword: userProfile.password,
+              }),
+          });
+          const data = await response.json();
+          alert(data.message); // Show success message
+      } catch (error) {
+          console.error('Error updating profile:', error);
+      }
+  };
+
+  // Handle adding funds to wallet
+  const handleAddFunds = async () => {
+      try {
+          const response = await fetch('http://localhost:5000/api/user/wallet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  userID: userId,
+                  amount: newFunds,
+              }),
+          });
+          const data = await response.json();
+          alert(data.message); // Show success message
+          setUserProfile((prev) => ({ ...prev, wallet: prev.wallet + newFunds })); // Update wallet locally
+          setNewFunds(0); // Reset funds input
+      } catch (error) {
+          console.error('Error adding funds:', error);
+      }
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+          const formData = new FormData();
+          formData.append('photo', file);
+          formData.append('userID', userId);
+
+          try {
+              const response = await fetch('http://localhost:5000/api/user/photo', {
+                  method: 'POST',
+                  body: formData,
+              });
+              const data = await response.json();
+              alert(data.message); // Show success message
+              setUserProfile((prev) => ({ ...prev, photo: `/images/${data.newPhoto}` })); // Update photo locally
+          } catch (error) {
+              console.error('Error uploading photo:', error);
+          }
+      }
+  };
+
+  return (
+      <div
+          style={{
+              minHeight: '100vh',
+              backgroundImage: 'url("/background.jpg")', // Same background as homepage
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              color: 'white',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+          }}
+      >
+          {/* User Photo */}
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+              <img
+                  src={userProfile.photo}
+                  alt="User"
+                  style={{
+                      width: '300px', // Three times bigger
+                      height: '300px',
+                      borderRadius: '50%', // Circle
+                      objectFit: 'cover',
+                      border: '3px solid white',
+                  }}
+              />
+              <label
+                  htmlFor="photoUpload"
+                  style={{
+                      position: 'absolute',
+                      bottom: '10px',
+                      right: '10px',
+                      backgroundColor: 'blue',
+                      color: 'white',
+                      padding: '10px',
+                      borderRadius: '40%',
+                      cursor: 'pointer',
+                  }}
+              >
+                  <i className="fa fa-camera" style={{ fontSize: '20px' }}></i>
+              </label>
+              <input
+                  id="photoUpload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoUpload}
+              />
+          </div>
+
+          {/* Username and Account Level */}
+          <h1 style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              Hey! {userProfile.username}
+              <span
+                  style={{
+                      backgroundColor: 'lightblue',
+                      color: 'black',
+                      padding: '5px 10px',
+                      borderRadius: '50%',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      transform: 'translateY(5px)',
+                  }}
+              >
+                  {userProfile.accountLevel}
+              </span>
+          </h1>
+
+          {/* Editable Fields */}
+          <div style={{ marginBottom: '15px', width: '30%' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
+              <div style={{ position: 'relative' }}>
+                  <input
+                      type="text"
+                      value={userProfile.username}
+                      onChange={(e) => setUserProfile({ ...userProfile, username: e.target.value })}
+                      style={{
+                          width: '100%',
+                          padding: '10px',
+                          fontSize: '16px',
+                          border: '1px solid #ccc',
+                          borderRadius: '25px',
+                          backgroundColor: 'white',
+                      }}
+                  />
+                  <i
+                      className="fa fa-pen"
+                      style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '16px',
+                          cursor: 'pointer',
+                          color: 'blue',
+                      }}
+                      title="Editable"
+                  ></i>
+              </div>
+          </div>
+          <div style={{ marginBottom: '15px', width: '30%' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
+              <div style={{ position: 'relative' }}>
+                  <input
+                      type="password"
+                      value={userProfile.password}
+                      onChange={(e) => setUserProfile({ ...userProfile, password: e.target.value })}
+                      style={{
+                          width: '100%',
+                          padding: '10px',
+                          fontSize: '16px',
+                          border: '1px solid #ccc',
+                          borderRadius: '25px',
+                          backgroundColor: 'white',
+                      }}
+                  />
+                  <i
+                      className="fa fa-pen"
+                      style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '16px',
+                          cursor: 'pointer',
+                          color: 'blue',
+                      }}
+                      title="Editable"
+                  ></i>
+              </div>
+          </div>
+          <div style={{ marginBottom: '15px', width: '30%' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
+              <div style={{ position: 'relative' }}>
+                  <input
+                      type="email"
+                      value={userProfile.email}
+                      onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                      style={{
+                          width: '100%',
+                          padding: '10px',
+                          fontSize: '16px',
+                          border: '1px solid #ccc',
+                          borderRadius: '25px',
+                          backgroundColor: 'white',
+                      }}
+                  />
+                  <i
+                      className="fa fa-pen"
+                      style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '16px',
+                          cursor: 'pointer',
+                          color: 'blue',
+                      }}
+                      title="Editable"
+                  ></i>
+              </div>
+          </div>
+          <div style={{ marginBottom: '15px', width: '30%', position: 'relative' }}>
+  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Birth Date:</label>
+  <input
+      type="text"
+      value={userProfile.birthDate}
+      readOnly
+      style={{
+          width: '100%',
+          padding: '10px',
+          fontSize: '16px',
+          border: '1px solid #ccc',
+          borderRadius: '25px',
+          backgroundColor: 'white',
+          color: 'black', // Always black for the value
+      }}
+  />
+  <span
+      style={{
+          position: 'absolute',
+          right: '15px',
+          top: '50%',
+          transform: 'translateY(10%)',
+          fontSize: '14px',
+          color: '#555', // Dark grey for the format
+          pointerEvents: 'none', // Prevent interaction with the span
+      }}
+  >
+      yyyy-mm-dd
+  </span>
+</div>
+
+          {/* Wallet Section */}
+<div style={{ marginBottom: '15px', width: '30%' }}>
+  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Wallet:</label>
+  <div style={{ position: 'relative' }}>
+      <input
+          type="text"
+          value={`Current: $${userProfile.wallet}`}
+          readOnly
+          style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '25px',
+              backgroundColor: '#f0f0f0', // Light gray to indicate it's read-only
+              marginBottom: '10px',
+          }}
+      />
+      <input
+          type="number"
+          placeholder="Add funds"
+          value={newFunds}
+          onChange={(e) => setNewFunds(Number(e.target.value))}
+          style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '25px',
+              backgroundColor: 'white',
+          }}
+      />
+      <button
+          onClick={handleAddFunds}
+          style={{
+              position: 'absolute',
+              right: '10px',
+              top: '78%',
+              transform: 'translateY(-50%)',
+              padding: '5px 10px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              backgroundColor: 'green',
+              color: 'white',
+              border: 'none',
+              borderRadius: '15px',
+          }}
+      >
+          Add
+      </button>
+  </div>
+</div>
+
+          {/* Save Changes and Back to Homepage */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
+              <button
+                  onClick={handleProfileUpdate}
+                  style={{
+                      padding: '10px 20px',
+                      fontSize: '16px',
+                      cursor: 'pointer',
+                      backgroundColor: 'blue',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '25px',
+                  }}
+              >
+                  Save Changes
+              </button>
+              <button
+                  onClick={() => navigate('/homepage')}
+                  style={{
+                      padding: '10px 20px',
+                      fontSize: '16px',
+                      cursor: 'pointer',
+                      backgroundColor: 'red',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '25px',
+                  }}
+              >
+                  Back to Homepage
+              </button>
+          </div>
+      </div>
+  );
+}
+
 function App() {
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
 
@@ -1676,6 +2062,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/homepage" element={userId ? <Homepage /> : <Login />} />
+        <Route path="/user-profile" element={userId ? <UserProfile /> : <Login />} />
         <Route path="/library" element={userId ? <Library /> : <Login />} /> {/* Library Route */}
       </Routes>
     </Router>
