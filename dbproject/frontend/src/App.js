@@ -427,6 +427,464 @@ function Signup() {
   );
 }
 
+function Library() {
+  const [games, setGames] = useState([]); // User's library games
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
+  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
+  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
+  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
+
+  // Fetch library games from the API
+  useEffect(() => {
+    const fetchLibraryGames = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/library/${userId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch library games');
+        }
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error('Error fetching library games:', error);
+      }
+    };
+
+    fetchLibraryGames();
+  }, [userId]);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('userId'); // Clear user ID from local storage
+    navigate('/'); // Redirect to login page
+  };
+
+  // Sorting logic
+  const handleSort = (type) => {
+    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
+    setSortOption({ type, order: newOrder });
+
+    const sortedGames = [...games];
+    switch (type) {
+      case 'alphabetical':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
+        );
+        break;
+      case 'rating':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
+        break;
+      default:
+        break;
+    }
+    setGames(sortedGames);
+  };
+
+  // Handle search
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
+    // Add your search logic here
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/background.jpg")', // Same background as homepage
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+          borderRadius: '5px',
+        }}
+      >
+        {/* Left Section: User Settings and Home */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* User Settings Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => {
+              const icon = e.currentTarget.querySelector('i');
+              if (icon) {
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid');
+              }
+            }}
+            onMouseOut={(e) => {
+              const icon = e.currentTarget.querySelector('i');
+              if (icon) {
+                icon.classList.remove('fa-solid');
+                icon.classList.add('fa-regular');
+              }
+            }}
+            onClick={() => console.log('Navigate to user settings')}
+          >
+            <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Home Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = '#c9061d')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => navigate('/homepage')} // Navigate to homepage
+          >
+            <i className="fa fa-home" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+        </div>
+
+        {/* Centered Title */}
+        <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Library</h1>
+
+        {/* Right Section: Search, Filter, Cart, and Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Search Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+            {showSearchBar && (
+              <form
+                onSubmit={handleSearchSubmit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'white',
+                  borderRadius: '25px',
+                  padding: '5px 10px',
+                  transition: 'all 0.3s ease',
+                  width: '200px',
+                  position: 'absolute',
+                  right: '60px',
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    flex: 1,
+                    padding: '5px',
+                    borderRadius: '25px',
+                    fontSize: '16px',
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'black',
+                  }}
+                >
+                  <i
+                    className="fa fa-arrow-right"
+                    style={{
+                      fontSize: '18px',
+                      marginLeft: '-24px',
+                    }}
+                  ></i>
+                </button>
+              </form>
+            )}
+            <button
+              style={{
+                cursor: 'pointer',
+                background: 'transparent',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                color: 'white',
+                width: '50px',
+                height: '50px',
+              }}
+              onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
+              onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
+              onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
+            >
+              <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
+            </button>
+          </div>
+
+          {/* Filter Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = 'green')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => console.log('Filter button clicked')}
+          >
+            <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Cart Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = 'orange')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => console.log('Cart button clicked')}
+          >
+            <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Logout Button */}
+          <button
+            style={{
+              padding: '10px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'red',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'red';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'red';
+              e.target.style.color = 'white';
+            }}
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Sorting Bar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'white',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          margin: '20px auto',
+          width: '35%',
+          color: 'black',
+        }}
+      >
+        {['Alphabetical', 'Rating'].map((option) => (
+          <button
+            key={option}
+            onClick={() => handleSort(option.toLowerCase())}
+            style={{
+              margin: '0 10px',
+              padding: '10px 15px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
+              color: 'black',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            {option}
+            {sortOption.type === option.toLowerCase() && (
+              <i
+                className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
+                style={{ fontSize: '14px' }}
+              ></i>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Games List */}
+      {games.length > 0 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px',
+            marginTop: '20px',
+          }}
+        >
+          {games.map((game) => (
+            <div
+              key={game.Game_ID}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '400px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                backgroundColor: 'black',
+              }}
+            >
+              {/* Game Image or Placeholder */}
+              {game.Game_poster ? (
+                <img
+                  src={`/images/${game.Game_poster}`}
+                  alt={game.Title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '60%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'white',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Image Not Available
+                </div>
+              )}
+
+              {/* Game Information */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  width: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '15px',
+                  textAlign: 'center',
+                }}
+              >
+                {/* Game Title */}
+                <h3
+                style={{
+                  margin: '0 0 10px 0', // Adjusted margin to move the title up
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  marginRight: '25px', // Add margin to the right for spacing
+                  paddingBottom: '25px', // Add padding to the bottom for spacing
+                  marginBottom: '10px', // Remove bottom margin to avoid extra space
+                  textAlign: 'center', // Center-align the title
+                  overflow: 'hidden', // Hide overflow
+                  textOverflow: 'ellipsis', // Add ellipsis for long titles
+                }}
+>
+                  {game.Title}
+                </h3>
+
+                {/* Game Rating (Lower Right) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    right: '10px',
+                    backgroundColor: 'rgba(255, 215, 0, 0.8)', // Gold background for rating
+                    color: 'black',
+                    padding: '5px 10px',
+                    borderRadius: '5px',
+                    paddingRight: '10px',
+                    marginRight: '30px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {game.rating}/10
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            color: 'black',
+            padding: '20px',
+            borderRadius: '10px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+          }}
+        >
+          No games available to play.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Homepage() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
@@ -968,440 +1426,6 @@ function Homepage() {
   );
 }
 
-function Library() {
-  const [games, setGames] = useState([]); // User's library games
-  const navigate = useNavigate();
-  const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
-  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
-  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
-  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
-
-  // Fetch library games from the API
-  useEffect(() => {
-    const fetchLibraryGames = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/library/${userId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch library games');
-        }
-        const data = await response.json();
-        setGames(data);
-      } catch (error) {
-        console.error('Error fetching library games:', error);
-      }
-    };
-
-    fetchLibraryGames();
-  }, [userId]);
-
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem('userId'); // Clear user ID from local storage
-    navigate('/'); // Redirect to login page
-  };
-
-  // Sorting logic
-  const handleSort = (type) => {
-    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
-    setSortOption({ type, order: newOrder });
-
-    const sortedGames = [...games];
-    switch (type) {
-      case 'alphabetical':
-        sortedGames.sort((a, b) =>
-          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
-        );
-        break;
-      case 'rating':
-        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
-        break;
-      default:
-        break;
-    }
-    setGames(sortedGames);
-  };
-
-  // Handle search
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
-    // Add your search logic here
-  };
-
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundImage: 'url("/background.jpg")', // Same background as homepage
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        color: 'white',
-        padding: '20px',
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '10px 20px',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
-          borderRadius: '5px',
-        }}
-      >
-        {/* Left Section: User Settings and Home */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* User Settings Button */}
-          <button
-            style={{
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s ease',
-              color: 'white',
-              width: '50px',
-              height: '50px',
-            }}
-            onMouseOver={(e) => {
-              const icon = e.currentTarget.querySelector('i');
-              if (icon) {
-                icon.classList.remove('fa-regular');
-                icon.classList.add('fa-solid');
-              }
-            }}
-            onMouseOut={(e) => {
-              const icon = e.currentTarget.querySelector('i');
-              if (icon) {
-                icon.classList.remove('fa-solid');
-                icon.classList.add('fa-regular');
-              }
-            }}
-            onClick={() => console.log('Navigate to user settings')}
-          >
-            <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
-          </button>
-
-          {/* Home Button */}
-          <button
-            style={{
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s ease',
-              color: 'white',
-              width: '50px',
-              height: '50px',
-            }}
-            onMouseOver={(e) => (e.target.style.color = '#c9061d')}
-            onMouseOut={(e) => (e.target.style.color = 'white')}
-            onClick={() => navigate('/homepage')} // Navigate to homepage
-          >
-            <i className="fa fa-home" style={{ fontSize: '24px', color: 'inherit' }}></i>
-          </button>
-        </div>
-
-        {/* Centered Title */}
-        <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Library</h1>
-
-        {/* Right Section: Search, Filter, Cart, and Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Search Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-            {showSearchBar && (
-              <form
-                onSubmit={handleSearchSubmit}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: 'white',
-                  borderRadius: '25px',
-                  padding: '5px 10px',
-                  transition: 'all 0.3s ease',
-                  width: '200px',
-                  position: 'absolute',
-                  right: '60px',
-                }}
-              >
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    flex: 1,
-                    padding: '5px',
-                    borderRadius: '25px',
-                    fontSize: '16px',
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'black',
-                  }}
-                >
-                  <i
-                    className="fa fa-arrow-right"
-                    style={{
-                      fontSize: '18px',
-                      marginLeft: '-24px',
-                    }}
-                  ></i>
-                </button>
-              </form>
-            )}
-            <button
-              style={{
-                cursor: 'pointer',
-                background: 'transparent',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                color: 'white',
-                width: '50px',
-                height: '50px',
-              }}
-              onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
-              onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
-              onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
-            >
-              <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
-            </button>
-          </div>
-
-          {/* Filter Button */}
-          <button
-            style={{
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s ease',
-              color: 'white',
-              width: '50px',
-              height: '50px',
-            }}
-            onMouseOver={(e) => (e.target.style.color = 'green')}
-            onMouseOut={(e) => (e.target.style.color = 'white')}
-            onClick={() => console.log('Filter button clicked')}
-          >
-            <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
-          </button>
-
-          {/* Cart Button */}
-          <button
-            style={{
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s ease',
-              color: 'white',
-              width: '50px',
-              height: '50px',
-            }}
-            onMouseOver={(e) => (e.target.style.color = 'orange')}
-            onMouseOut={(e) => (e.target.style.color = 'white')}
-            onClick={() => console.log('Cart button clicked')}
-          >
-            <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
-          </button>
-
-          {/* Logout Button */}
-          <button
-            style={{
-              padding: '10px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              backgroundColor: 'red',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.color = 'red';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'red';
-              e.target.style.color = 'white';
-            }}
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {/* Sorting Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'white',
-          padding: '10px 20px',
-          borderRadius: '10px',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-          margin: '20px auto',
-          width: '35%',
-          color: 'black',
-        }}
-      >
-        {['Alphabetical', 'Rating'].map((option) => (
-          <button
-            key={option}
-            onClick={() => handleSort(option.toLowerCase())}
-            style={{
-              margin: '0 10px',
-              padding: '10px 15px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
-              color: 'black',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            {option}
-            {sortOption.type === option.toLowerCase() && (
-              <i
-                className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
-                style={{ fontSize: '14px' }}
-              ></i>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Games List */}
-      {games.length > 0 ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-            marginTop: '20px',
-          }}
-        >
-          {games.map((game) => (
-            <div
-              key={game.Game_ID}
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: '400px',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                backgroundColor: 'black',
-              }}
-            >
-              {/* Game Image or Placeholder */}
-              {game.Game_poster ? (
-                <img
-                  src={`/images/${game.Game_poster}`}
-                  alt={game.Title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: '100%',
-                    height: '60%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Image Not Available
-                </div>
-              )}
-
-              {/* Game Information */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '0',
-                  width: '100%',
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  color: 'white',
-                  padding: '15px',
-                  textAlign: 'center',
-                }}
-              >
-                <h3
-                  style={{
-                    margin: '0 0 10px 0',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {game.Title}
-                </h3>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'white',
-            color: 'black',
-            padding: '20px',
-            borderRadius: '10px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-          }}
-        >
-          No games available to play.
-        </div>
-      )}
-    </div>
-  );
-}
 
 function App() {
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
