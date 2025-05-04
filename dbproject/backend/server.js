@@ -86,13 +86,18 @@ app.get('/api/library/:userID', async (req, res) => {
 
 // Search Game API
 app.get('/api/search', async (req, res) => {
-    const { rating, publisher_id, price } = req.query;
+    const { title, min_rating, max_rating, publisher_name, min_release_year, max_release_year, min_price, max_price } = req.query;
     try {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('rating', rating || null)
-            .input('publisher_id', publisher_id || null)
-            .input('price', price || null)
+            .input('title', sql.VarChar, title || null)
+            .input('min_rating', sql.Int, min_rating || null)
+            .input('max_rating', sql.Int, max_rating || null)
+            .input('publisher_name', sql.VarChar, publisher_name || null)
+            .input('min_release_year', sql.Int, min_release_year || null)
+            .input('max_release_year', sql.Int, max_release_year || null)
+            .input('min_price', sql.Decimal(10, 2), min_price || null)
+            .input('max_price', sql.Decimal(10, 2), max_price || null)
             .execute('Search_Game');
         res.json(result.recordset);
     } catch (err) {

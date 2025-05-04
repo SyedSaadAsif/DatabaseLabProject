@@ -102,18 +102,34 @@ JOIN Game_Catalogue G ON L.game_ID = G.Game_ID
 where L.User_ID = @userID;
 end
 
-
-GO
--- Search Procedure by Rating, Publisher, Price
 CREATE PROCEDURE Search_Game
-    @rating INT = NULL, @publisher_id INT = NULL, @price DECIMAL(10,2) = NULL
+    @title VARCHAR(255) = NULL,
+    @min_rating INT = NULL,
+    @max_rating INT = NULL,
+    @publisher_name VARCHAR(255) = NULL,
+    @min_release_year INT = NULL,
+    @max_release_year INT = NULL,
+    @min_price DECIMAL(10,2) = NULL,
+    @max_price DECIMAL(10,2) = NULL
 AS
 BEGIN
-    SELECT * FROM Game_Catalogue
-    WHERE (@rating IS NULL OR rating = @rating)
-      AND (@publisher_id IS NULL OR publisher_id = @publisher_id)
-      AND (@price IS NULL OR Price <= @price);
+    -- Ensure rating constraints
+    IF @min_rating < 0 SET @min_rating = 0;
+    IF @max_rating > 10 SET @max_rating = 10;
+
+    SELECT gc.*
+    FROM Game_Catalogue gc
+    JOIN [User] u ON gc.publisher_id = u.User_ID
+    WHERE (@title IS NULL OR gc.Title LIKE '%' + @title + '%')
+      AND (@min_rating IS NULL OR gc.rating >= @min_rating)
+      AND (@max_rating IS NULL OR gc.rating <= @max_rating)
+      AND (@publisher_name IS NULL OR u.username LIKE '%' + @publisher_name + '%')
+      AND (@min_release_year IS NULL OR YEAR(gc.release_date) >= @min_release_year)
+      AND (@max_release_year IS NULL OR YEAR(gc.release_date) <= @max_release_year)
+      AND (@min_price IS NULL OR gc.Price >= @min_price)
+      AND (@max_price IS NULL OR gc.Price <= @max_price);
 END;
+
 GO
 -- Purchase Procedure
 CREATE PROCEDURE Purchase
