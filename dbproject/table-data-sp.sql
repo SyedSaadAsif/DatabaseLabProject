@@ -96,7 +96,7 @@ CREATE PROCEDURE Library_view
 @userID INT
 AS
 begin
-SELECT L.User_ID, G.Game_ID, G.Title, G.[Description], L.Last_played , L.Play_time
+SELECT L.User_ID, G.Game_ID, G.Title, G.[Description], G.rating, G.Game_poster
 FROM Library L
 JOIN Game_Catalogue G ON L.game_ID = G.Game_ID 
 where L.User_ID = @userID;
