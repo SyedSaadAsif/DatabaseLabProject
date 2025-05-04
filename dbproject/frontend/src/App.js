@@ -2,6 +2,880 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
+function Homepage() {
+  const [games, setGames] = useState([]);
+  const navigate = useNavigate();
+  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
+  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
+  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false); // State to toggle filter overlay
+  const [filterData, setFilterData] = useState({
+    title: '',
+    min_rating: '',
+    max_rating: '',
+    publisher_name: '',
+    min_release_year: '',
+    max_release_year: '',
+    min_price: '',
+    max_price: '',
+  });
+
+  // Fetch games from the API
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/games');
+        if (!response.ok) {
+          throw new Error('Failed to fetch games');
+        }
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error('Error fetching games:', error);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  // Handle filter apply
+  const handleApplyFilter = async () => {
+    try {
+      const queryParams = new URLSearchParams(filterData).toString();
+      const response = await fetch(`http://localhost:5000/api/search?${queryParams}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch filtered games');
+      }
+      const data = await response.json();
+      setGames(data); // Update games with filtered data
+      setShowFilterOverlay(false); // Close the overlay
+    } catch (error) {
+      console.error('Error applying filter:', error);
+    }
+  };
+
+  // Handle filter input change
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('userId'); // Clear user ID from local storage
+    navigate('/'); // Redirect to login page
+  };
+
+  // Button styles with hover effect
+  const buttonStyle = (bgColor, textColor) => ({
+    padding: '10px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    backgroundColor: bgColor,
+    color: textColor,
+    border: 'none',
+    borderRadius: '5px',
+    transition: 'all 0.3s ease',
+  });
+
+  const buttonHoverStyle = (bgColor, textColor) => ({
+    ':hover': {
+      backgroundColor: textColor,
+      color: bgColor,
+    },
+  });
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
+    // Add your search logic here
+  };
+
+  // Sorting logic
+  const handleSort = (type) => {
+    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
+    setSortOption({ type, order: newOrder });
+
+    const sortedGames = [...games];
+    switch (type) {
+      case 'alphabetical':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
+        );
+        break;
+      case 'price':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.Price - b.Price : b.Price - a.Price));
+        break;
+      case 'discount':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.discount - b.discount : b.discount - a.discount
+        );
+        break;
+      case 'rating':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
+        break;
+      default:
+        break;
+    }
+    setGames(sortedGames);
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/background.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+      }}
+    >
+      {/* Filter Overlay */}
+      {showFilterOverlay && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)', // White overlay with slight transparency
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000, // Ensure it appears above other elements
+    }}
+    onClick={() => setShowFilterOverlay(false)} // Close overlay on click
+  >
+    <div
+      style={{
+        backgroundColor: 'white',
+        padding: '30px', // Increased padding for better spacing
+        borderRadius: '10px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+        textAlign: 'center',
+        position: 'relative',
+        width: '60%', // Set a fixed width for the filter box
+        maxWidth: '800px', // Ensure it doesn't grow too large
+      }}
+      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the box
+    >
+      {/* Heading */}
+      <h2
+        style={{
+          marginBottom: '20px',
+          color: 'white',
+          textShadow: '2px 2px 4px black', // Black stroke effect
+          backgroundColor: 'black',
+          padding: '10px',
+          borderRadius: '5px',
+        }}
+      >
+        Filters
+      </h2>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)', // Two columns for side-by-side fields
+          gap: '20px', // Space between fields
+        }}
+      >
+        <div>
+          <input
+            type="text"
+            name="title"
+            value={filterData.title}
+            onChange={handleFilterChange}
+            placeholder="Title" // Placeholder for label inside the field
+            style={{
+              width: '95%',
+              padding: '8px', // Reduced padding for smaller fields
+              fontSize: '14px', // Smaller font size
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="text"
+            name="publisher_name"
+            value={filterData.publisher_name}
+            onChange={handleFilterChange}
+            placeholder="Publisher Name" // Placeholder for label inside the field
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="min_rating"
+            value={filterData.min_rating}
+            onChange={handleFilterChange}
+            placeholder="Min Rating" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="max_rating"
+            value={filterData.max_rating}
+            onChange={handleFilterChange}
+            placeholder="Max Rating" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="min_release_year"
+            value={filterData.min_release_year}
+            onChange={handleFilterChange}
+            placeholder="Min Release Year" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="max_release_year"
+            value={filterData.max_release_year}
+            onChange={handleFilterChange}
+            placeholder="Max Release Year" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="min_price"
+            value={filterData.min_price}
+            onChange={handleFilterChange}
+            placeholder="Min Price" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            name="max_price"
+            value={filterData.max_price}
+            onChange={handleFilterChange}
+            placeholder="Max Price" // Placeholder for label inside the field
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault(); // Prevent non-numeric input
+              }
+            }}
+            style={{
+              width: '95%',
+              padding: '8px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              color: '#333',
+            }}
+          />
+        </div>
+      </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px' }}>
+          <button
+            style={{
+              padding: '10px 20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'green',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease', // Smooth transition for hover effect
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'green';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'green';
+              e.target.style.color = 'white';
+            }}
+            onClick={handleApplyFilter} // Apply filter on click
+          >
+            Apply Filter
+          </button>
+          <button
+            style={{
+              marginLeft: '-525px',
+              padding: '10px 20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'blue',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease', // Smooth transition for hover effect
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'blue';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'blue';
+              e.target.style.color = 'white';
+            }}
+            onClick={() => setFilterData({
+              title: '',
+              min_rating: '',
+              max_rating: '',
+              publisher_name: '',
+              min_release_year: '',
+              max_release_year: '',
+              min_price: '',
+              max_price: '',
+            })} // Reset filter fields
+          >
+            Reset
+          </button>
+          <button
+            style={{
+              padding: '10px 20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'red',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease', // Smooth transition for hover effect
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'red';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'red';
+              e.target.style.color = 'white';
+            }}
+            onClick={() => setShowFilterOverlay(false)} // Close overlay on button click
+          >
+            X
+          </button>
+        </div>
+    </div>
+  </div>
+)}
+
+      {/* Header */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          borderRadius: '5px',
+        }}
+>
+  {/* Left Section: User Settings and Library */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    {/* User Settings Button */}
+    <button
+  style={{
+    cursor: 'pointer',
+    background: 'transparent', // Make background transparent
+    border: 'none', // Remove border
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    color: 'white', // Set the default color for the button
+    width: '50px', // Ensure consistent button size
+    height: '50px', // Ensure consistent button size
+  }}
+  onMouseOver={(e) => {
+    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.classList.remove('fa-regular'); // Remove the regular class
+      icon.classList.add('fa-solid'); // Add the solid class
+    }
+  }}
+  onMouseOut={(e) => {
+    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.classList.remove('fa-solid'); // Remove the solid class
+      icon.classList.add('fa-regular'); // Add the regular class
+    }
+  }}
+  onClick={() => {
+    console.log('Navigate to user settings');
+  }}
+>
+  <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+</button>
+
+    {/* Library Button */}
+    <button
+  style={{
+    cursor: 'pointer',
+    background: 'transparent', // Make background transparent
+    border: 'none', // Remove border
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    color: 'white', // Set the default color for the button
+    width: '50px', // Ensure consistent button size
+    height: '50px', // Ensure consistent button size
+  }}
+  onMouseOver={(e) => {
+    e.target.style.color = '#c9061d'; // Change button text color (affects icon too)
+    const icon = e.target.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.style.color = '#c9061d'; // Ensure icon color matches
+    }
+  }}
+  onMouseOut={(e) => {
+    e.target.style.color = 'white'; // Reset button text color (affects icon too)
+    const icon = e.target.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.style.color = 'white'; // Ensure icon color resets
+    }
+  }}
+  onClick={() => navigate('/library')} // Navigate to the Library page
+>
+  <i className="fa fa-book" style={{ fontSize: '24px', color: 'inherit' }}></i>
+</button>
+  </div>
+
+  {/* Centered Title */}
+  <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Store</h1>
+
+  {/* Right Section: Buttons */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    {/* Search Button (Swapped with Cart) */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+  {/* Search Bar */}
+  {showSearchBar && (
+    <form
+      onSubmit={handleSearchSubmit}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: '25px',
+        padding: '5px 10px',
+        transition: 'all 0.3s ease',
+        width: '200px',
+        position: 'absolute', // Position it relative to the parent container
+        right: '60px', // Adjust the position to the left of the search icon
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{
+          border: 'none',
+          outline: 'none',
+          flex: 1,
+          padding: '5px',
+          borderRadius: '25px',
+          fontSize: '16px',
+        }}
+      />
+      <button
+        type="submit"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'black',
+        }}
+      >
+        <i
+  className="fa fa-arrow-right"
+  style={{
+    fontSize: '18px',
+    marginLeft: '-24px', // Adjust this value to move it left
+  }}
+></i>
+
+      </button>
+    </form>
+  )}
+
+  {/* Search Button */}
+  <button
+    style={{
+      cursor: 'pointer',
+      background: 'transparent',
+      border: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.3s ease',
+      color: 'white',
+      width: '50px',
+      height: '50px',
+    }}
+    onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
+    onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
+    onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
+  >
+    <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
+  </button>
+</div>
+
+    {/* Filter Button */}
+    <button
+          style={{
+            cursor: 'pointer',
+            background: 'transparent',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease',
+            color: 'white',
+            width: '50px',
+            height: '50px',
+          }}
+          onMouseOver={(e) => {
+            e.target.style.color = 'green';
+            const icon = e.target.querySelector('i');
+            if (icon) {
+              icon.style.color = 'green';
+            }
+          }}
+          onMouseOut={(e) => {
+            e.target.style.color = 'white';
+            const icon = e.target.querySelector('i');
+            if (icon) {
+              icon.style.color = 'white';
+            }
+          }}
+          onClick={() => setShowFilterOverlay((prev) => !prev)} // Toggle overlay visibility
+        >
+          <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
+        </button>
+
+    {/* Cart Button (Swapped with Search) */}
+    <button
+      style={{
+        cursor: 'pointer',
+        background: 'transparent', // Make background transparent
+        border: 'none', // Remove border
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+        color: 'white', // Set the default color for the button
+        width: '50px', // Ensure consistent button size
+        height: '50px', // Ensure consistent button size
+      }}
+      onMouseOver={(e) => {
+        e.target.style.color = 'orange'; // Change button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'orange'; // Ensure icon color matches
+        }
+      }}
+      onMouseOut={(e) => {
+        e.target.style.color = 'white'; // Reset button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'white'; // Ensure icon color resets
+        }
+      }}
+      onClick={() => {
+        console.log('Cart button clicked');
+      }}
+    >
+      <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
+    </button>
+
+    {/* Logout Button */}
+    <button
+      style={buttonStyle('red', 'white')}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'white';
+        e.target.style.color = 'red';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'red';
+        e.target.style.color = 'white';
+      }}
+      onClick={handleLogout}
+    >
+      Logout
+    </button>
+  </div>
+</header>
+      {/* Sorting Bar */}
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+    margin: '20px auto',
+    width: '35%', // Centered and responsive width
+    color: 'black',
+  }}
+>
+  {['Alphabetical', 'Price', 'Discount', 'Rating'].map((option) => (
+    <button
+      key={option}
+      onClick={() => handleSort(option.toLowerCase())}
+      style={{
+        margin: '0 10px',
+        padding: '10px 15px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        backgroundColor: 'transparent',
+        border: 'none',
+        borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
+        color: 'black',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+      }}
+    >
+      {option}
+      {sortOption.type === option.toLowerCase() && (
+        <i
+          className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
+          style={{ fontSize: '14px' }}
+        ></i>
+      )}
+    </button>
+  ))}
+</div>
+
+      {/* Games List */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '20px',
+          marginTop: '20px',
+        }}
+      >
+        {games.map((game) => (
+          <div
+            key={game.Game_ID}
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '400px',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+              backgroundColor: 'black',
+            }}
+    >
+      {/* Discount Banner */}
+      {game.discount > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            backgroundColor: 'rgba(0, 255, 0, 0.8)', // Green background for discount
+            color: 'white',
+            padding: '5px 10px',
+            borderRadius: '5px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
+        >
+          {`${game.discount}% OFF`}
+        </div>
+      )}
+
+      {/* Game Image or Placeholder */}
+      {game.Game_poster ? (
+        <img
+          src={`/images/${game.Game_poster}`} // Ensure this matches the file name in the public/images folder
+          alt={game.Title}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '60%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light background for placeholder
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          Image Not Available
+        </div>
+      )}
+
+      {/* Game Information */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '0',
+          width: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', // Black background with transparency
+          color: 'white',
+          padding: '15px',
+          textAlign: 'center',
+        }}
+      >
+        {/* Game Title */}
+        <h3
+  style={{
+    margin: '0 0 10px 0', // Adjusted margin to move the title up
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginRight: '25px', // Add margin to the right for spacing
+    paddingBottom: '25px', // Add padding to the bottom for spacing
+    marginBottom: '10px', // Remove bottom margin to avoid extra space
+    textAlign: 'center', // Center-align the title
+    overflow: 'hidden', // Hide overflow
+    textOverflow: 'ellipsis', // Add ellipsis for long titles
+  }}
+>
+  {game.Title}
+</h3>
+
+        {/* Game Price (Lower Left) */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          {game.discount > 0 ? (
+            <>
+              <span style={{ textDecoration: 'line-through', color: 'gray', marginRight: '10px' }}>
+                ${game.Price.toFixed(2)}
+              </span>
+              <span style={{ color: 'green' }}>
+                ${(game.Price * (1 - game.discount / 100)).toFixed(2)}
+              </span>
+            </>
+          ) : (
+            `$${game.Price.toFixed(2)}`
+          )}
+        </div>
+
+        {/* Game Rating (Lower Right) */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            right: '10px',
+            backgroundColor: 'rgba(255, 215, 0, 0.8)', // Gold background for rating
+            color: 'black',
+            padding: '5px 10px',
+            borderRadius: '5px',
+            paddingRight: '10px',
+            marginRight: '30px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
+        >
+          {game.rating}/10
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+    </div>
+  );
+}
+
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -792,548 +1666,6 @@ function Library() {
     </div>
   );
 }
-
-function Homepage() {
-  const [games, setGames] = useState([]);
-  const navigate = useNavigate();
-  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
-  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
-  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
-
-  // Fetch games from the API
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/games');
-        if (!response.ok) {
-          throw new Error('Failed to fetch games');
-        }
-        const data = await response.json();
-        setGames(data);
-      } catch (error) {
-        console.error('Error fetching games:', error);
-      }
-    };
-
-    fetchGames();
-  }, []);
-
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem('userId'); // Clear user ID from local storage
-    navigate('/'); // Redirect to login page
-  };
-
-  // Button styles with hover effect
-  const buttonStyle = (bgColor, textColor) => ({
-    padding: '10px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    backgroundColor: bgColor,
-    color: textColor,
-    border: 'none',
-    borderRadius: '5px',
-    transition: 'all 0.3s ease',
-  });
-
-  const buttonHoverStyle = (bgColor, textColor) => ({
-    ':hover': {
-      backgroundColor: textColor,
-      color: bgColor,
-    },
-  });
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
-    // Add your search logic here
-  };
-
-  // Sorting logic
-  const handleSort = (type) => {
-    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
-    setSortOption({ type, order: newOrder });
-
-    const sortedGames = [...games];
-    switch (type) {
-      case 'alphabetical':
-        sortedGames.sort((a, b) =>
-          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
-        );
-        break;
-      case 'price':
-        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.Price - b.Price : b.Price - a.Price));
-        break;
-      case 'discount':
-        sortedGames.sort((a, b) =>
-          newOrder === 'asc' ? a.discount - b.discount : b.discount - a.discount
-        );
-        break;
-      case 'rating':
-        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
-        break;
-      default:
-        break;
-    }
-    setGames(sortedGames);
-  };
-
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundImage: 'url("/background.jpg")', // Same background as login page
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        color: 'white',
-        padding: '20px',
-      }}
-    >
-      {/* Header */}
-      <header
-  style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
-    borderRadius: '5px',
-  }}
->
-  {/* Left Section: User Settings and Library */}
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    {/* User Settings Button */}
-    <button
-  style={{
-    cursor: 'pointer',
-    background: 'transparent', // Make background transparent
-    border: 'none', // Remove border
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s ease',
-    color: 'white', // Set the default color for the button
-    width: '50px', // Ensure consistent button size
-    height: '50px', // Ensure consistent button size
-  }}
-  onMouseOver={(e) => {
-    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.classList.remove('fa-regular'); // Remove the regular class
-      icon.classList.add('fa-solid'); // Add the solid class
-    }
-  }}
-  onMouseOut={(e) => {
-    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.classList.remove('fa-solid'); // Remove the solid class
-      icon.classList.add('fa-regular'); // Add the regular class
-    }
-  }}
-  onClick={() => {
-    console.log('Navigate to user settings');
-  }}
->
-  <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
-</button>
-
-    {/* Library Button */}
-    <button
-  style={{
-    cursor: 'pointer',
-    background: 'transparent', // Make background transparent
-    border: 'none', // Remove border
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s ease',
-    color: 'white', // Set the default color for the button
-    width: '50px', // Ensure consistent button size
-    height: '50px', // Ensure consistent button size
-  }}
-  onMouseOver={(e) => {
-    e.target.style.color = '#c9061d'; // Change button text color (affects icon too)
-    const icon = e.target.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.style.color = '#c9061d'; // Ensure icon color matches
-    }
-  }}
-  onMouseOut={(e) => {
-    e.target.style.color = 'white'; // Reset button text color (affects icon too)
-    const icon = e.target.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.style.color = 'white'; // Ensure icon color resets
-    }
-  }}
-  onClick={() => navigate('/library')} // Navigate to the Library page
->
-  <i className="fa fa-book" style={{ fontSize: '24px', color: 'inherit' }}></i>
-</button>
-  </div>
-
-  {/* Centered Title */}
-  <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Store</h1>
-
-  {/* Right Section: Buttons */}
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    {/* Search Button (Swapped with Cart) */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-  {/* Search Bar */}
-  {showSearchBar && (
-    <form
-      onSubmit={handleSearchSubmit}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderRadius: '25px',
-        padding: '5px 10px',
-        transition: 'all 0.3s ease',
-        width: '200px',
-        position: 'absolute', // Position it relative to the parent container
-        right: '60px', // Adjust the position to the left of the search icon
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Search"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{
-          border: 'none',
-          outline: 'none',
-          flex: 1,
-          padding: '5px',
-          borderRadius: '25px',
-          fontSize: '16px',
-        }}
-      />
-      <button
-        type="submit"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'black',
-        }}
-      >
-        <i
-  className="fa fa-arrow-right"
-  style={{
-    fontSize: '18px',
-    marginLeft: '-24px', // Adjust this value to move it left
-  }}
-></i>
-
-      </button>
-    </form>
-  )}
-
-  {/* Search Button */}
-  <button
-    style={{
-      cursor: 'pointer',
-      background: 'transparent',
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'all 0.3s ease',
-      color: 'white',
-      width: '50px',
-      height: '50px',
-    }}
-    onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
-    onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
-    onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
-  >
-    <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
-  </button>
-</div>
-
-    {/* Filter Button */}
-    <button
-      style={{
-        cursor: 'pointer',
-        background: 'transparent', // Make background transparent
-        border: 'none', // Remove border
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.3s ease',
-        color: 'white', // Set the default color for the button
-        width: '50px', // Ensure consistent button size
-        height: '50px', // Ensure consistent button size
-      }}
-      onMouseOver={(e) => {
-        e.target.style.color = 'green'; // Change button text color (affects icon too)
-        const icon = e.target.querySelector('i'); // Target the icon inside the button
-        if (icon) {
-          icon.style.color = 'green'; // Ensure icon color matches
-        }
-      }}
-      onMouseOut={(e) => {
-        e.target.style.color = 'white'; // Reset button text color (affects icon too)
-        const icon = e.target.querySelector('i'); // Target the icon inside the button
-        if (icon) {
-          icon.style.color = 'white'; // Ensure icon color resets
-        }
-      }}
-      onClick={() => {
-        console.log('Filter button clicked');
-      }}
-    >
-      <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
-    </button>
-
-    {/* Cart Button (Swapped with Search) */}
-    <button
-      style={{
-        cursor: 'pointer',
-        background: 'transparent', // Make background transparent
-        border: 'none', // Remove border
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.3s ease',
-        color: 'white', // Set the default color for the button
-        width: '50px', // Ensure consistent button size
-        height: '50px', // Ensure consistent button size
-      }}
-      onMouseOver={(e) => {
-        e.target.style.color = 'orange'; // Change button text color (affects icon too)
-        const icon = e.target.querySelector('i'); // Target the icon inside the button
-        if (icon) {
-          icon.style.color = 'orange'; // Ensure icon color matches
-        }
-      }}
-      onMouseOut={(e) => {
-        e.target.style.color = 'white'; // Reset button text color (affects icon too)
-        const icon = e.target.querySelector('i'); // Target the icon inside the button
-        if (icon) {
-          icon.style.color = 'white'; // Ensure icon color resets
-        }
-      }}
-      onClick={() => {
-        console.log('Cart button clicked');
-      }}
-    >
-      <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
-    </button>
-
-    {/* Logout Button */}
-    <button
-      style={buttonStyle('red', 'white')}
-      onMouseOver={(e) => {
-        e.target.style.backgroundColor = 'white';
-        e.target.style.color = 'red';
-      }}
-      onMouseOut={(e) => {
-        e.target.style.backgroundColor = 'red';
-        e.target.style.color = 'white';
-      }}
-      onClick={handleLogout}
-    >
-      Logout
-    </button>
-  </div>
-</header>
-      {/* Sorting Bar */}
-<div
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: '10px 20px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-    margin: '20px auto',
-    width: '35%', // Centered and responsive width
-    color: 'black',
-  }}
->
-  {['Alphabetical', 'Price', 'Discount', 'Rating'].map((option) => (
-    <button
-      key={option}
-      onClick={() => handleSort(option.toLowerCase())}
-      style={{
-        margin: '0 10px',
-        padding: '10px 15px',
-        fontSize: '16px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        backgroundColor: 'transparent',
-        border: 'none',
-        borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
-        color: 'black',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-      }}
-    >
-      {option}
-      {sortOption.type === option.toLowerCase() && (
-        <i
-          className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
-          style={{ fontSize: '14px' }}
-        ></i>
-      )}
-    </button>
-  ))}
-</div>
-
-      {/* Games List */}
-      <div
-  style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Fewer games per row
-    gap: '20px',
-    marginTop: '20px',
-  }}
->
-  {games.map((game) => (
-    <div
-      key={game.Game_ID}
-      style={{
-        position: 'relative', // For overlaying elements
-        width: '100%',
-        height: '400px', // Increased height for more information
-        borderRadius: '10px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-        backgroundColor: 'black', // Black background for transparency
-      }}
-    >
-      {/* Discount Banner */}
-      {game.discount > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            backgroundColor: 'rgba(0, 255, 0, 0.8)', // Green background for discount
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '5px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-          }}
-        >
-          {`${game.discount}% OFF`}
-        </div>
-      )}
-
-      {/* Game Image or Placeholder */}
-      {game.Game_poster ? (
-        <img
-          src={`/images/${game.Game_poster}`} // Ensure this matches the file name in the public/images folder
-          alt={game.Title}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            height: '60%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light background for placeholder
-            color: 'white',
-            fontSize: '16px',
-            fontWeight: 'bold',
-          }}
-        >
-          Image Not Available
-        </div>
-      )}
-
-      {/* Game Information */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '0',
-          width: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)', // Black background with transparency
-          color: 'white',
-          padding: '15px',
-          textAlign: 'center',
-        }}
-      >
-        {/* Game Title */}
-        <h3
-  style={{
-    margin: '0 0 10px 0', // Adjusted margin to move the title up
-    fontSize: '18px',
-    fontWeight: 'bold',
-    marginRight: '25px', // Add margin to the right for spacing
-    paddingBottom: '25px', // Add padding to the bottom for spacing
-    marginBottom: '10px', // Remove bottom margin to avoid extra space
-    textAlign: 'center', // Center-align the title
-    overflow: 'hidden', // Hide overflow
-    textOverflow: 'ellipsis', // Add ellipsis for long titles
-  }}
->
-  {game.Title}
-</h3>
-
-        {/* Game Price (Lower Left) */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '10px',
-            left: '10px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-          }}
-        >
-          {game.discount > 0 ? (
-            <>
-              <span style={{ textDecoration: 'line-through', color: 'gray', marginRight: '10px' }}>
-                ${game.Price.toFixed(2)}
-              </span>
-              <span style={{ color: 'green' }}>
-                ${(game.Price * (1 - game.discount / 100)).toFixed(2)}
-              </span>
-            </>
-          ) : (
-            `$${game.Price.toFixed(2)}`
-          )}
-        </div>
-
-        {/* Game Rating (Lower Right) */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '10px',
-            right: '10px',
-            backgroundColor: 'rgba(255, 215, 0, 0.8)', // Gold background for rating
-            color: 'black',
-            padding: '5px 10px',
-            borderRadius: '5px',
-            paddingRight: '10px',
-            marginRight: '30px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-          }}
-        >
-          {game.rating}/10
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
-
-    </div>
-  );
-}
-
 
 function App() {
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
