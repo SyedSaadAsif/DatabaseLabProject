@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
-  const navigate = useNavigate(); // Import and use the hook correctly
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent page reload on form submission
+    e.preventDefault();
     try {
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
@@ -23,9 +25,10 @@ function Login() {
         throw new Error(errorData.error || 'Login failed');
       }
 
-      const data = await response.json(); // Assuming backend returns JSON
+      const data = await response.json();
+      localStorage.setItem('userId', data.userId); // Save user ID to local storage
       setLoginMessage(`Login successful! User ID: ${data.userId}`);
-      //navigate('/dashboard'); // Redirect to another page after successful login
+      navigate('/homepage'); // Navigate to the homepage
     } catch (error) {
       console.error('Error during login:', error);
       setLoginMessage(error.message || "Login failed. Please check your credentials.");
@@ -55,7 +58,7 @@ function Login() {
           fontWeight: 'bold',
         }}
       >
-        Welcome to the Login Page
+        Welcome to, Kattuti
       </h1>
       <form
         onSubmit={handleLogin}
@@ -90,7 +93,7 @@ function Login() {
             required
           />
         </div>
-        <div style={{ marginBottom: '15px' }}>
+        <div style={{ position: 'relative', marginBottom: '15px' }}>
           <label
             style={{
               display: 'block',
@@ -101,18 +104,37 @@ function Login() {
             Password:
           </label>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"} // Toggle input type
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{
-              width: '300px',
+              width: '270px',
               padding: '10px',
               fontSize: '16px',
               border: '1px solid #ccc',
               borderRadius: '5px',
+              paddingRight: '40px', // Add space for the icon
             }}
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)} // Toggle visibility
+            style={{
+              position: 'absolute',
+              right: '10px',
+              top: '72%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <i
+              className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+              style={{ fontSize: '18px', color: 'black' }}
+            ></i>
+          </button>
         </div>
         <button
           type="submit"
@@ -177,12 +199,14 @@ function Signup() {
     email: '',
     date_of_birth: '',
   });
-  const [signupMessage, setSignupMessage] = useState("");
+  const [signupMessage, setSignupMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/signup', {
+      const signupResponse = await fetch('http://localhost:5000/api/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,16 +214,34 @@ function Signup() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!signupResponse.ok) {
+        const errorData = await signupResponse.json();
         throw new Error(errorData.error || 'Signup failed');
       }
 
-      const data = await response.json();
-      setSignupMessage(data.message || "Signup successful!");
+      const loginResponse = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json();
+        throw new Error(errorData.error || 'Login failed after signup');
+      }
+
+      const loginData = await loginResponse.json();
+      localStorage.setItem('userId', loginData.userId); // Save user ID to local storage
+      setSignupMessage('Signup successful! Redirecting to homepage...');
+      navigate('/homepage'); // Navigate to the homepage
     } catch (error) {
       console.error('Error during signup:', error);
-      setSignupMessage(error.message || "Signup failed. Please try again.");
+      setSignupMessage(error.message || 'Signup failed. Please try again.');
     }
   };
 
@@ -210,168 +252,1167 @@ function Signup() {
 
   return (
     <div
-    style={{
-      textAlign: 'center',
-      minHeight: '94.5vh',
-      backgroundImage: 'url("/searchpage.jpg")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      color: 'white',
-      padding: '20px',
-      position: 'relative', // Allows absolute positioning of child elements
-    }}
-  >
-    <h1
       style={{
-        position: 'absolute',
-        top: '20px', // y-coordinate for the title
-        left: '50%', // x-coordinate for the title
-        transform: 'translate(-50%, 0)', // Center the title horizontally
+        textAlign: 'center',
+        minHeight: '94.5vh',
+        backgroundImage: 'url("/searchpage.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+        position: 'relative',
       }}
     >
-      Sign Up
-    </h1>
-    <form
-      onSubmit={handleSignup}
-      style={{
-        position: 'relative', // Allows absolute positioning of form fields
-        top: '100px', // y-coordinate for the form
-        left: '50%', // x-coordinate for the form
-        transform: 'translate(-50%, 0)', // Center the form horizontally
-        width: '400px', // Set a fixed width for the form
-      }}
-    >
-      <div
+      <h1
         style={{
           position: 'absolute',
-          top: '0px', // y-coordinate for Username field
-          left: '0px', // x-coordinate for Username field
-          width: '100%',
-        }}
-      >
-        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
-        <input
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-          }}
-          required
-        />
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          top: '80px', // y-coordinate for Password field
-          left: '0px', // x-coordinate for Password field
-          width: '100%',
-        }}
-      >
-        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-          }}
-          required
-        />
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          top: '160px', // y-coordinate for Email field
-          left: '0px', // x-coordinate for Email field
-          width: '100%',
-        }}
-      >
-        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-          }}
-          required
-        />
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          top: '240px', // y-coordinate for Date of Birth field
-          left: '0px', // x-coordinate for Date of Birth field
-          width: '100%',
-        }}
-      >
-        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Date of Birth:</label>
-        <input
-          type="date"
-          name="date_of_birth"
-          value={formData.date_of_birth}
-          onChange={handleChange}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-          }}
-          required
-        />
-      </div>
-      <button
-        type="submit"
-        style={{
-          position: 'absolute',
-          top: '370px', // y-coordinate for Submit button
-          left: '0px', // x-coordinate for Submit button
-          width: '106%',
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          backgroundColor: 'green',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
+          top: '20px',
+          left: '50%',
+          transform: 'translate(-50%, 0)',
         }}
       >
         Sign Up
+      </h1>
+      <form
+        onSubmit={handleSignup}
+        style={{
+          position: 'relative',
+          top: '100px',
+          left: '50%',
+          transform: 'translate(-50%, 0)',
+          width: '400px',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '0px',
+            left: '0px',
+            width: '100%',
+          }}
+        >
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+            }}
+            required
+          />
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: '80px',
+            left: '0px',
+            width: '100%',
+          }}
+        >
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
+          <input
+            type={showPassword ? 'text' : 'password'} // Toggle input type
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            style={{
+              width: '90%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              paddingRight: '50px', // Add space for the icon
+            }}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)} // Toggle visibility
+            style={{
+              position: 'absolute',
+              right: '-10px',
+              top: '70%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <i
+              className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+              style={{ fontSize: '18px', color: 'black' }}
+            ></i>
+          </button>
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: '160px',
+            left: '0px',
+            width: '100%',
+          }}
+        >
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+            }}
+            required
+          />
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: '240px',
+            left: '0px',
+            width: '100%',
+          }}
+        >
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Date of Birth:</label>
+          <input
+            type="date"
+            name="date_of_birth"
+            value={formData.date_of_birth}
+            onChange={handleChange}
+            style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+            }}
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          style={{
+            position: 'absolute',
+            top: '370px',
+            left: '0px',
+            width: '106%',
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: 'green',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+          }}
+        >
+          Sign Up
+        </button>
+      </form>
+      {signupMessage && (
+        <p style={{ color: signupMessage.includes('successful') ? 'green' : 'red' }}>
+          {signupMessage}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Homepage() {
+  const [games, setGames] = useState([]);
+  const navigate = useNavigate();
+  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
+  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
+  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
+
+  // Fetch games from the API
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/games');
+        if (!response.ok) {
+          throw new Error('Failed to fetch games');
+        }
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error('Error fetching games:', error);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('userId'); // Clear user ID from local storage
+    navigate('/'); // Redirect to login page
+  };
+
+  // Button styles with hover effect
+  const buttonStyle = (bgColor, textColor) => ({
+    padding: '10px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    backgroundColor: bgColor,
+    color: textColor,
+    border: 'none',
+    borderRadius: '5px',
+    transition: 'all 0.3s ease',
+  });
+
+  const buttonHoverStyle = (bgColor, textColor) => ({
+    ':hover': {
+      backgroundColor: textColor,
+      color: bgColor,
+    },
+  });
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
+    // Add your search logic here
+  };
+
+  // Sorting logic
+  const handleSort = (type) => {
+    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
+    setSortOption({ type, order: newOrder });
+
+    const sortedGames = [...games];
+    switch (type) {
+      case 'alphabetical':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
+        );
+        break;
+      case 'price':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.Price - b.Price : b.Price - a.Price));
+        break;
+      case 'discount':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.discount - b.discount : b.discount - a.discount
+        );
+        break;
+      case 'rating':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
+        break;
+      default:
+        break;
+    }
+    setGames(sortedGames);
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/background.jpg")', // Same background as login page
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+      }}
+    >
+      {/* Header */}
+      <header
+  style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '10px 20px',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+    borderRadius: '5px',
+  }}
+>
+  {/* Left Section: User Settings and Library */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    {/* User Settings Button */}
+    <button
+  style={{
+    cursor: 'pointer',
+    background: 'transparent', // Make background transparent
+    border: 'none', // Remove border
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    color: 'white', // Set the default color for the button
+    width: '50px', // Ensure consistent button size
+    height: '50px', // Ensure consistent button size
+  }}
+  onMouseOver={(e) => {
+    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.classList.remove('fa-regular'); // Remove the regular class
+      icon.classList.add('fa-solid'); // Add the solid class
+    }
+  }}
+  onMouseOut={(e) => {
+    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.classList.remove('fa-solid'); // Remove the solid class
+      icon.classList.add('fa-regular'); // Add the regular class
+    }
+  }}
+  onClick={() => {
+    console.log('Navigate to user settings');
+  }}
+>
+  <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+</button>
+
+    {/* Library Button */}
+    <button
+  style={{
+    cursor: 'pointer',
+    background: 'transparent', // Make background transparent
+    border: 'none', // Remove border
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    color: 'white', // Set the default color for the button
+    width: '50px', // Ensure consistent button size
+    height: '50px', // Ensure consistent button size
+  }}
+  onMouseOver={(e) => {
+    e.target.style.color = '#c9061d'; // Change button text color (affects icon too)
+    const icon = e.target.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.style.color = '#c9061d'; // Ensure icon color matches
+    }
+  }}
+  onMouseOut={(e) => {
+    e.target.style.color = 'white'; // Reset button text color (affects icon too)
+    const icon = e.target.querySelector('i'); // Target the icon inside the button
+    if (icon) {
+      icon.style.color = 'white'; // Ensure icon color resets
+    }
+  }}
+  onClick={() => navigate('/library')} // Navigate to the Library page
+>
+  <i className="fa fa-book" style={{ fontSize: '24px', color: 'inherit' }}></i>
+</button>
+  </div>
+
+  {/* Centered Title */}
+  <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Store</h1>
+
+  {/* Right Section: Buttons */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    {/* Search Button (Swapped with Cart) */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+  {/* Search Bar */}
+  {showSearchBar && (
+    <form
+      onSubmit={handleSearchSubmit}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: '25px',
+        padding: '5px 10px',
+        transition: 'all 0.3s ease',
+        width: '200px',
+        position: 'absolute', // Position it relative to the parent container
+        right: '60px', // Adjust the position to the left of the search icon
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{
+          border: 'none',
+          outline: 'none',
+          flex: 1,
+          padding: '5px',
+          borderRadius: '25px',
+          fontSize: '16px',
+        }}
+      />
+      <button
+        type="submit"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'black',
+        }}
+      >
+        <i
+  className="fa fa-arrow-right"
+  style={{
+    fontSize: '18px',
+    marginLeft: '-24px', // Adjust this value to move it left
+  }}
+></i>
+
       </button>
     </form>
-    {signupMessage && (
-      <p style={{ color: signupMessage.includes('successful') ? 'green' : 'red' }}>
-        {signupMessage}
-      </p>
-    )}
+  )}
+
+  {/* Search Button */}
+  <button
+    style={{
+      cursor: 'pointer',
+      background: 'transparent',
+      border: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.3s ease',
+      color: 'white',
+      width: '50px',
+      height: '50px',
+    }}
+    onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
+    onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
+    onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
+  >
+    <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
+  </button>
+</div>
+
+    {/* Filter Button */}
+    <button
+      style={{
+        cursor: 'pointer',
+        background: 'transparent', // Make background transparent
+        border: 'none', // Remove border
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+        color: 'white', // Set the default color for the button
+        width: '50px', // Ensure consistent button size
+        height: '50px', // Ensure consistent button size
+      }}
+      onMouseOver={(e) => {
+        e.target.style.color = 'green'; // Change button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'green'; // Ensure icon color matches
+        }
+      }}
+      onMouseOut={(e) => {
+        e.target.style.color = 'white'; // Reset button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'white'; // Ensure icon color resets
+        }
+      }}
+      onClick={() => {
+        console.log('Filter button clicked');
+      }}
+    >
+      <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
+    </button>
+
+    {/* Cart Button (Swapped with Search) */}
+    <button
+      style={{
+        cursor: 'pointer',
+        background: 'transparent', // Make background transparent
+        border: 'none', // Remove border
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+        color: 'white', // Set the default color for the button
+        width: '50px', // Ensure consistent button size
+        height: '50px', // Ensure consistent button size
+      }}
+      onMouseOver={(e) => {
+        e.target.style.color = 'orange'; // Change button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'orange'; // Ensure icon color matches
+        }
+      }}
+      onMouseOut={(e) => {
+        e.target.style.color = 'white'; // Reset button text color (affects icon too)
+        const icon = e.target.querySelector('i'); // Target the icon inside the button
+        if (icon) {
+          icon.style.color = 'white'; // Ensure icon color resets
+        }
+      }}
+      onClick={() => {
+        console.log('Cart button clicked');
+      }}
+    >
+      <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
+    </button>
+
+    {/* Logout Button */}
+    <button
+      style={buttonStyle('red', 'white')}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'white';
+        e.target.style.color = 'red';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'red';
+        e.target.style.color = 'white';
+      }}
+      onClick={handleLogout}
+    >
+      Logout
+    </button>
   </div>
+</header>
+      {/* Sorting Bar */}
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+    margin: '20px auto',
+    width: '35%', // Centered and responsive width
+    color: 'black',
+  }}
+>
+  {['Alphabetical', 'Price', 'Discount', 'Rating'].map((option) => (
+    <button
+      key={option}
+      onClick={() => handleSort(option.toLowerCase())}
+      style={{
+        margin: '0 10px',
+        padding: '10px 15px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        backgroundColor: 'transparent',
+        border: 'none',
+        borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
+        color: 'black',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+      }}
+    >
+      {option}
+      {sortOption.type === option.toLowerCase() && (
+        <i
+          className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
+          style={{ fontSize: '14px' }}
+        ></i>
+      )}
+    </button>
+  ))}
+</div>
+
+      {/* Games List */}
+      <div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Fewer games per row
+    gap: '20px',
+    marginTop: '20px',
+  }}
+>
+  {games.map((game) => (
+    <div
+      key={game.Game_ID}
+      style={{
+        position: 'relative', // For overlaying elements
+        width: '100%',
+        height: '400px', // Increased height for more information
+        borderRadius: '10px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+        backgroundColor: 'black', // Black background for transparency
+      }}
+    >
+      {/* Discount Banner */}
+      {game.discount > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            backgroundColor: 'rgba(0, 255, 0, 0.8)', // Green background for discount
+            color: 'white',
+            padding: '5px 10px',
+            borderRadius: '5px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
+        >
+          {`${game.discount}% OFF`}
+        </div>
+      )}
+
+      {/* Game Image or Placeholder */}
+      {game.Game_poster ? (
+        <img
+          src={`/images/${game.Game_poster}`} // Ensure this matches the file name in the public/images folder
+          alt={game.Title}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '60%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light background for placeholder
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          Image Not Available
+        </div>
+      )}
+
+      {/* Game Information */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '0',
+          width: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', // Black background with transparency
+          color: 'white',
+          padding: '15px',
+          textAlign: 'center',
+        }}
+      >
+        {/* Game Title */}
+        <h3
+  style={{
+    margin: '0 0 10px 0', // Adjusted margin to move the title up
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginRight: '25px', // Add margin to the right for spacing
+    paddingBottom: '25px', // Add padding to the bottom for spacing
+    marginBottom: '10px', // Remove bottom margin to avoid extra space
+    textAlign: 'center', // Center-align the title
+    overflow: 'hidden', // Hide overflow
+    textOverflow: 'ellipsis', // Add ellipsis for long titles
+  }}
+>
+  {game.Title}
+</h3>
+
+        {/* Game Price (Lower Left) */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          {game.discount > 0 ? (
+            <>
+              <span style={{ textDecoration: 'line-through', color: 'gray', marginRight: '10px' }}>
+                ${game.Price.toFixed(2)}
+              </span>
+              <span style={{ color: 'green' }}>
+                ${(game.Price * (1 - game.discount / 100)).toFixed(2)}
+              </span>
+            </>
+          ) : (
+            `$${game.Price.toFixed(2)}`
+          )}
+        </div>
+
+        {/* Game Rating (Lower Right) */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            right: '10px',
+            backgroundColor: 'rgba(255, 215, 0, 0.8)', // Gold background for rating
+            color: 'black',
+            padding: '5px 10px',
+            borderRadius: '5px',
+            paddingRight: '10px',
+            marginRight: '30px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
+        >
+          {game.rating}/10
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+    </div>
+  );
+}
+
+function Library() {
+  const [games, setGames] = useState([]); // User's library games
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
+  const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
+  const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
+  const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
+
+  // Fetch library games from the API
+  useEffect(() => {
+    const fetchLibraryGames = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/library/${userId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch library games');
+        }
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error('Error fetching library games:', error);
+      }
+    };
+
+    fetchLibraryGames();
+  }, [userId]);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('userId'); // Clear user ID from local storage
+    navigate('/'); // Redirect to login page
+  };
+
+  // Sorting logic
+  const handleSort = (type) => {
+    const newOrder = sortOption.type === type && sortOption.order === 'asc' ? 'desc' : 'asc';
+    setSortOption({ type, order: newOrder });
+
+    const sortedGames = [...games];
+    switch (type) {
+      case 'alphabetical':
+        sortedGames.sort((a, b) =>
+          newOrder === 'asc' ? a.Title.localeCompare(b.Title) : b.Title.localeCompare(a.Title)
+        );
+        break;
+      case 'rating':
+        sortedGames.sort((a, b) => (newOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating));
+        break;
+      default:
+        break;
+    }
+    setGames(sortedGames);
+  };
+
+  // Handle search
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
+    // Add your search logic here
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/background.jpg")', // Same background as homepage
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+          borderRadius: '5px',
+        }}
+      >
+        {/* Left Section: User Settings and Home */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* User Settings Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => {
+              const icon = e.currentTarget.querySelector('i');
+              if (icon) {
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid');
+              }
+            }}
+            onMouseOut={(e) => {
+              const icon = e.currentTarget.querySelector('i');
+              if (icon) {
+                icon.classList.remove('fa-solid');
+                icon.classList.add('fa-regular');
+              }
+            }}
+            onClick={() => console.log('Navigate to user settings')}
+          >
+            <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Home Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = '#c9061d')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => navigate('/homepage')} // Navigate to homepage
+          >
+            <i className="fa fa-home" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+        </div>
+
+        {/* Centered Title */}
+        <h1 style={{ margin: 0, flex: 1, textAlign: 'center' }}>Library</h1>
+
+        {/* Right Section: Search, Filter, Cart, and Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Search Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+            {showSearchBar && (
+              <form
+                onSubmit={handleSearchSubmit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'white',
+                  borderRadius: '25px',
+                  padding: '5px 10px',
+                  transition: 'all 0.3s ease',
+                  width: '200px',
+                  position: 'absolute',
+                  right: '60px',
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    flex: 1,
+                    padding: '5px',
+                    borderRadius: '25px',
+                    fontSize: '16px',
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'black',
+                  }}
+                >
+                  <i
+                    className="fa fa-arrow-right"
+                    style={{
+                      fontSize: '18px',
+                      marginLeft: '-24px',
+                    }}
+                  ></i>
+                </button>
+              </form>
+            )}
+            <button
+              style={{
+                cursor: 'pointer',
+                background: 'transparent',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                color: 'white',
+                width: '50px',
+                height: '50px',
+              }}
+              onMouseOver={(e) => (e.target.style.color = '#00bfff')} // Change color to light blue on hover
+              onMouseOut={(e) => (e.target.style.color = 'white')} // Reset color to white on mouse out
+              onClick={() => setShowSearchBar((prev) => !prev)} // Toggle search bar visibility
+            >
+              <i className="fa fa-search" style={{ fontSize: '24px', color: 'inherit' }}></i>
+            </button>
+          </div>
+
+          {/* Filter Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = 'green')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => console.log('Filter button clicked')}
+          >
+            <i className="fa fa-filter" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Cart Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = 'orange')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => console.log('Cart button clicked')}
+          >
+            <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Logout Button */}
+          <button
+            style={{
+              padding: '10px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'red',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'red';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'red';
+              e.target.style.color = 'white';
+            }}
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Sorting Bar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'white',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          margin: '20px auto',
+          width: '35%',
+          color: 'black',
+        }}
+      >
+        {['Alphabetical', 'Rating'].map((option) => (
+          <button
+            key={option}
+            onClick={() => handleSort(option.toLowerCase())}
+            style={{
+              margin: '0 10px',
+              padding: '10px 15px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderBottom: sortOption.type === option.toLowerCase() ? '2px solid black' : 'none',
+              color: 'black',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            {option}
+            {sortOption.type === option.toLowerCase() && (
+              <i
+                className={`fa fa-arrow-${sortOption.order === 'asc' ? 'up' : 'down'}`}
+                style={{ fontSize: '14px' }}
+              ></i>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Games List */}
+      {games.length > 0 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px',
+            marginTop: '20px',
+          }}
+        >
+          {games.map((game) => (
+            <div
+              key={game.Game_ID}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '400px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                backgroundColor: 'black',
+              }}
+            >
+              {/* Game Image or Placeholder */}
+              {game.Game_poster ? (
+                <img
+                  src={`/images/${game.Game_poster}`}
+                  alt={game.Title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '60%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'white',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Image Not Available
+                </div>
+              )}
+
+              {/* Game Information */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  width: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '15px',
+                  textAlign: 'center',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: '0 0 10px 0',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {game.Title}
+                </h3>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            color: 'black',
+            padding: '20px',
+            borderRadius: '10px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+          }}
+        >
+          No games available to play.
+        </div>
+      )}
+    </div>
   );
 }
 
 function App() {
+  const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
+
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/homepage" element={userId ? <Homepage /> : <Login />} />
+        <Route path="/library" element={userId ? <Library /> : <Login />} /> {/* Library Route */}
       </Routes>
     </Router>
   );
