@@ -123,7 +123,7 @@ app.post('/api/purchase', async (req, res) => {
 });
 
 // Add to Cart API
-app.post('/api/cart', async (req, res) => {
+app.post('/api/cartadd', async (req, res) => {
     const { userID, gameID } = req.body;
     try {
         const pool = await poolPromise;
@@ -210,7 +210,7 @@ app.post('/api/user/wallet', async (req, res) => {
 });
 
 // Remove Game from Cart
-app.delete('/api/cart', async (req, res) => {
+app.delete('/api/cartdelete', async (req, res) => {
     const { userID, gameID } = req.body;
 
     try {
@@ -228,7 +228,24 @@ app.delete('/api/cart', async (req, res) => {
         res.status(500).json({ error: 'Failed to remove game from cart' });
     }
 });
-             
+app.get('/api/cartview', async (req, res) => {
+    const userId = req.query.userId; // Get userId from query parameters
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('UserID', sql.Int, userId) // Pass the userId to the stored procedure
+            .execute('ViewCartContents'); // Call the stored procedure
+
+        res.json(result.recordset); // Send the cart items as a response
+    } catch (error) {
+        console.error('Error fetching cart items:', error);
+        res.status(500).json({ error: 'Failed to fetch cart items' });
+    }
+});         
 // View User's Purchase History
 app.get('/api/user/purchase-history/:userID', async (req, res) => {
     const { userID } = req.params;

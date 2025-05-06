@@ -657,7 +657,7 @@ function Homepage() {
         }
       }}
       onClick={() => {
-        console.log('Cart button clicked');
+        navigate('/cart');
       }}
     >
       <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
@@ -874,7 +874,122 @@ function Homepage() {
     </div>
   );
 }
+function Cart() {
+  const [cartItems, setCartItems] = useState([]); // State to store cart items
+  const [loading, setLoading] = useState(true); // State to show loading indicator
+  const [error, setError] = useState(null); // State to handle errors
 
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const userId = localStorage.getItem('userId'); // Get the current user's ID from localStorage
+        if (!userId) {
+          throw new Error('User not logged in');
+        }
+
+        const response = await fetch(`http://localhost:5000/api/cartview?userId=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch cart items');
+        }
+
+        const data = await response.json();
+        setCartItems(data); // Update cart items state
+      } catch (err) {
+        console.error('Error fetching cart items:', err);
+        setError(err.message || 'Failed to load cart items');
+      } finally {
+        setLoading(false); // Stop loading indicator
+      }
+    };
+
+    fetchCartItems();
+  }, []);
+
+  if (loading) {
+    return <div>Loading your cart...</div>; // Show loading indicator while fetching data
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>; // Show error message if fetching fails
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh', // Full viewport height
+      backgroundImage: 'url(/background.jpg)', // Path to the image in the /public/images folder
+      backgroundSize: 'cover', // Ensure the image covers the entire background
+      backgroundPosition: 'center', // Center the image
+      backgroundRepeat: 'no-repeat', // Prevent the image from repeating
+      color: '#333', // Text color to contrast with the background
+      padding: '20px',
+    }}>
+      <h1
+      style={{
+        textAlign: 'center', // Center the heading horizontally
+        fontSize: '36px', // Larger font size for emphasis
+        fontWeight: 'bold', // Make the text bold
+        color: '#fff', // White text to contrast with the background
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)', // Add a shadow for better readability
+        marginBottom: '30px', // Add spacing below the heading
+      }}>Cart</h1>
+      {cartItems.length > 0 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px',
+          }}
+        >
+          {cartItems.map((item) => (
+            <div
+              key={item.Game_ID}
+              style={{
+                border: '1px solid #ddd', // Softer border color
+                borderRadius: '0px', // Slightly more rounded corners
+                padding: '5px', // Increased padding for better spacing
+                textAlign: 'center',
+                backgroundColor: 'black', // Light grey background for a cleaner look
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Subtle shadow for a card effect
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease', // Smooth hover effect
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
+                e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)'; // Enhanced shadow on hover
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Reset shadow
+              }}
+            >
+              <img
+                src={`/images/${item.Game_Poster}`} // Fetch image from /public/images folder
+                alt={item.Game_Title}
+                style={{
+                  width: '100%',
+                  height: '350px',
+                  objectFit: 'cover',
+                  borderRadius: '0px',
+                }}
+              />
+              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
+    <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
+    <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
+    <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
+  </div>
+          ))}
+        </div>
+      ) : (
+        <p>Your cart is empty.</p>
+      )}
+    </div>
+  );
+}
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -2063,6 +2178,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/homepage" element={userId ? <Homepage /> : <Login />} />
         <Route path="/user-profile" element={userId ? <UserProfile /> : <Login />} />
+        <Route path="/cart" element={<Cart />} /> {/* Cart Route */}
         <Route path="/library" element={userId ? <Library /> : <Login />} /> {/* Library Route */}
       </Routes>
     </Router>

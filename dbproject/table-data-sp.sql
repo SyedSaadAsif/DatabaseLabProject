@@ -303,6 +303,33 @@ BEGIN
 
    
 END;
+CREATE PROCEDURE ViewCartContents
+    @UserID INT
+AS
+BEGIN
+    -- Check if the user exists
+    IF NOT EXISTS (SELECT 1 FROM [User] WHERE User_ID = @UserID)
+    BEGIN
+        PRINT 'Error: User does not exist.';
+        RETURN;
+    END
+
+    -- Select the cart contents for the given user
+    SELECT 
+        c.GameID,
+        g.Title AS Game_Title,
+        g.Price AS Game_Price,
+        g.Game_poster AS Game_Poster, -- Include the poster URL
+        c.Game_Count AS Quantity,
+        (g.Price * c.Game_Count) AS Total_Price
+    FROM 
+        Cart c
+    JOIN 
+        Game_Catalogue g ON c.GameID = g.Game_ID
+    WHERE 
+        c.UserID = @UserID;
+END;
+GO
 go
 -- procedure to remove a review
 CREATE PROCEDURE RemoveReview
