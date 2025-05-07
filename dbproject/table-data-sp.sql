@@ -386,7 +386,26 @@ CREATE VIEW View_All_Games AS
 SELECT Game_ID, Title, [Description], Game_poster, rating, publisher_id, Price, release_date, discount
 FROM
     Game_Catalogue;
-	
+
+GO	
+CREATE PROCEDURE GetGameReviews
+    @GameID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        r.Review_ID,
+        r.Comment,
+        r.likes,
+        r.Comment_date,
+        u.username
+    FROM Reviews r
+    JOIN [User] u ON r.user_ID = u.User_ID
+    WHERE r.game_ID = @GameID
+    ORDER BY r.Comment_date DESC; -- Optional: Order by the most recent reviews
+END;
+GO
 
 use project
 

@@ -333,6 +333,19 @@ app.get('/api/games/all', async (req, res) => {
     }
 });
 
+app.get('/api/reviews/:gameID', async (req, res) => {
+    const { gameID } = req.params;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('GameID', sql.Int, gameID)
+            .execute('GetGameReviews'); // Call the stored procedure
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error fetching reviews:', err);
+        res.status(500).json({ error: 'Failed to fetch reviews' });
+    }
+});
 
 
 const PORT = 5000;

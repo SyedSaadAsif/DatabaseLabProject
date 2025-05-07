@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 function GameDetails() {
-  const { gameID } = useParams(); // Get the gameID from the URL
+  const { gameID } = useParams();
   const navigate = useNavigate();
-  const location = useLocation(); // Get the current location to determine the context
-  const [game, setGame] = useState(null); // State to store game details
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const userId = localStorage.getItem('userId'); // Get the logged-in user's ID
+  const location = useLocation();
+  const [game, setGame] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const userId = localStorage.getItem('userId');
 
-  // Fetch game details from the API
   useEffect(() => {
     const fetchGameDetails = async () => {
       try {
@@ -27,10 +27,22 @@ function GameDetails() {
       }
     };
 
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/reviews/${gameID}`);
+        if (response.ok) {
+          const data = await response.json();
+          setReviews(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews:', err);
+      }
+    };
+
     fetchGameDetails();
+    fetchReviews();
   }, [gameID]);
 
-  // Handle Add to Cart
   const handleAddToCart = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/cart/add', {
@@ -47,7 +59,6 @@ function GameDetails() {
     }
   };
 
-  // Handle Buy Now
   const handleBuyNow = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/purchase', {
@@ -59,7 +70,7 @@ function GameDetails() {
         throw new Error('Failed to purchase game');
       }
       alert('Game purchased successfully!');
-      navigate('/library'); // Redirect to the library after purchase
+      navigate('/library');
     } catch (err) {
       alert(err.message || 'Failed to purchase game');
     }
@@ -80,11 +91,13 @@ function GameDetails() {
   if (loading) return <div>Loading game details...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const discountedPrice = game.discount > 0 ? (game.Price - (game.Price * game.discount) / 100).toFixed(2) : null;
+
   return (
     <div
       style={{
         minHeight: '100vh',
-        backgroundImage: 'url("/background.jpg")',
+        backgroundImage: `url("/images/${game.Game_poster}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -92,70 +105,109 @@ function GameDetails() {
         padding: '20px',
       }}
     >
-      <h1>{game.Title}</h1>
-      <img
-        src={`/images/${game.Game_poster}`}
-        alt={game.Title}
-        style={{ width: '300px', height: '400px', objectFit: 'cover', borderRadius: '10px' }}
-      />
-      <p>{game.Description}</p>
-      <p>Price: ${game.Price}</p>
-      <p>Rating: {game.rating}/10</p>
-      <p>Release Date: {new Date(game.release_date).toLocaleDateString()}</p>
-      <p>Discount: {game.discount}%</p>
+      <div
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          borderRadius: '10px',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          position: 'relative',
+        }}
+      >
+        {/* Title and Description */}
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ margin: 0 }}>{game.Title}</h1>
+            <h3>Description</h3>
+            <p>{game.Description}</p>
+          </div>
+          <div style={{ textAlign: 'right', marginTop: '-18px'}}>
+            {/* Discount and Rating */}
+            {game.discount > 0 && (
+              <p
+                style={{
+                  backgroundColor: 'yellow',
+                  color: 'black',
+                  padding: '5px 10px',
+                  borderRadius: '5px',
+                  display: 'inline-block',
+                  marginRight: '10px',
+                }}
+              >
+                Discount: {game.discount}%
+              </p>
+            )}
+            <p
+              style={{
+                backgroundColor: 'green',
+                color: 'white',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                display: 'inline-block',
+              }}
+            >
+              Rating: {game.rating}/10
+            </p>
+          </div>
+        </div>
 
-      {/* Render buttons based on context */}
-      <div style={{ marginTop: '20px' }}>
-        {getContext() === 'library' && (
+        {/* Publisher and Other Details */}
+        <div>
+          <h3>Details</h3>
+          <p>Publisher: {game.Publisher}</p>
+          <p>Release Date: {new Date(game.release_date).toLocaleDateString()}</p>
+          <p>Price: ${game.Price}</p>
+          {discountedPrice && <p>Discounted Price: ${discountedPrice}</p>}
+        </div>
+
+        {/* Game Requirements */}
+        <div>
+          <h3>System Requirements</h3>
+          <ul>
+            <li>Processor: {game.Processor}</li>
+            <li>GPU: {game.Gpu}</li>
+            <li>RAM: {game.Ram}</li>
+            <li>Storage: {game.Storage}</li>
+            <li>OS: {game.OS}</li>
+            <li>DirectX: {game.DXD3_version}</li>
+          </ul>
+        </div>
+
+        {/* Buttons */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '20px',
+            right: '20px',
+            display: 'flex',
+            gap: '10px',
+          }}
+        >
           <button
-            onClick={handlePlayGame}
+            onClick={handleAddToCart}
             style={{
               padding: '10px 20px',
               fontSize: '16px',
-              backgroundColor: 'green',
+              backgroundColor: 'blue',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'blue';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'blue';
+              e.target.style.color = 'white';
             }}
           >
-            Play
+            Add to Cart
           </button>
-        )}
-        {getContext() === 'store' && (
-          <>
-            <button
-              onClick={handleAddToCart}
-              style={{
-                padding: '10px 20px',
-                fontSize: '16px',
-                backgroundColor: 'blue',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                marginRight: '10px',
-              }}
-            >
-              Add to Cart
-            </button>
-            <button
-              onClick={handleBuyNow}
-              style={{
-                padding: '10px 20px',
-                fontSize: '16px',
-                backgroundColor: 'orange',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-              }}
-            >
-              Buy Now
-            </button>
-          </>
-        )}
-        {getContext() === 'cart' && (
           <button
             onClick={handleBuyNow}
             style={{
@@ -166,10 +218,44 @@ function GameDetails() {
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'orange';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'orange';
+              e.target.style.color = 'white';
             }}
           >
             Buy Now
           </button>
+        </div>
+      </div>
+
+      {/* Reviews */}
+      <div style={{ marginTop: '20px' }}>
+        <h3>Reviews</h3>
+        {reviews.length > 0 ? (
+          reviews.map((review) => (
+            <div
+              key={review.Review_ID}
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                padding: '10px',
+                borderRadius: '5px',
+                marginBottom: '10px',
+              }}
+            >
+              <p>
+                <strong>{review.username}</strong>: {review.Comment}
+              </p>
+              <p>Likes: {review.likes}</p>
+            </div>
+          ))
+        ) : (
+          <p>No reviews available.</p>
         )}
       </div>
     </div>
