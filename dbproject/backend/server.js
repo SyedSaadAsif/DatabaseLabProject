@@ -61,7 +61,7 @@ app.post('/api/login', async (req, res) => {
         if (result.recordset.length > 0) {
             res.json({ userId: result.recordset[0].User_ID });
         } else {
-            res.status(401).json({ error: 'Invalid credentials' });
+            res.json({ userId: -1 }); // Return -1 if credentials are invalid
         }
     } catch (err) {
         console.error('Error during login:', err);

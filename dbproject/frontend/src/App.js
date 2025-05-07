@@ -1096,14 +1096,18 @@ function Login() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        throw new Error('Failed to log in');
       }
 
       const data = await response.json();
-      localStorage.setItem('userId', data.userId); // Save user ID to local storage
-      setLoginMessage(`Login successful! User ID: ${data.userId}`);
-      navigate('/homepage'); // Navigate to the homepage
+      if (data.userId === -1) {
+        setLoginMessage("Invalid username or password.");
+        localStorage.removeItem('userId'); // Clear any previously stored userId
+      } else {
+        localStorage.setItem('userId', data.userId); // Save user ID to local storage
+        setLoginMessage("Login successful!");
+        navigate('/homepage'); // Navigate to the homepage
+      }
     } catch (error) {
       console.error('Error during login:', error);
       setLoginMessage(error.message || "Login failed. Please check your credentials.");

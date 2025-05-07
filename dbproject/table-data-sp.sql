@@ -86,10 +86,11 @@ CREATE PROCEDURE Login
     @password VARCHAR(255)
 AS
 BEGIN
-    SELECT User_ID FROM [User]
-    WHERE username = @username AND password = @password;
+    SELECT User_ID 
+    FROM [User]
+    WHERE username = @username COLLATE Latin1_General_BIN2
+      AND password = @password COLLATE Latin1_General_BIN2;
 END;
-
 GO
 -- User Library View
 CREATE PROCEDURE Library_view
@@ -303,6 +304,8 @@ BEGIN
 
    
 END;
+
+GO
 CREATE PROCEDURE ViewCartContents
     @UserID INT
 AS
