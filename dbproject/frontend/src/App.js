@@ -1024,7 +1024,6 @@ function Cart() {
                 //margin: '0 auto',  // Smooth hover effect
                 cursor: 'pointer',
               }}
-              onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
                 e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)'; // Enhanced shadow on hover
