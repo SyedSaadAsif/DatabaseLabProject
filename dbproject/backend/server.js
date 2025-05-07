@@ -108,13 +108,19 @@ app.get('/api/search', async (req, res) => {
 
 // Purchase API
 app.post('/api/purchase', async (req, res) => {
-    const { userID, gameID } = req.body;
+    const { userID, gameIDs } = req.body;
+    if (!userID || !gameIDs) {
+        return res.status(400).json({ error: 'User ID and Game ID are required' });
+    }
     try {
         const pool = await poolPromise;
+        for(const gameID of gameIDs) {
+        console.log("Processing purchase for User ID:", userID, "Game ID:", gameID);
         await pool.request()
-            .input('userID', userID)
-            .input('gameID', gameID)
-            .execute('Purchase');
+        .input('userID', sql.Int, userID) // Ensure userID is passed as an integer
+        .input('gameID', sql.Int, gameID) // Pass each gameID as an integer
+        .execute('Purchase'); 
+        }
         res.status(200).json({ message: 'Game(s) purchased successfully' });
     } catch (err) {
         console.error('Error during purchase:', err);

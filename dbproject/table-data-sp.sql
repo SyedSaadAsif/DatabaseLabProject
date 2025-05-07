@@ -150,7 +150,7 @@ BEGIN
         VALUES (@userID, @gameID, GETDATE(), GETDATE(), 0);
     END
 END;
-
+exec Purchase 10,14
 GO
 -- add to cart
 CREATE PROCEDURE AddToCart
@@ -278,7 +278,7 @@ BEGIN
     BEGIN
         UPDATE [User]
         SET wallet = wallet + @Amount
-        WHERE User_ID = @UserID;
+        WHERE [User].User_ID = @UserID;
     END
     ELSE
     BEGIN
@@ -286,7 +286,7 @@ BEGIN
     END
 END;
 go
-
+exec AddFundsToWallet 10,50
 -- procedure to remove game from cart
 CREATE PROCEDURE RemoveGameFromCart
     @User_ID INT,
@@ -527,7 +527,7 @@ EXEC UpdateUserProfile
 
 
 -- test procedure add funds to wallet
-EXEC AddFundsToWallet @UserID = 1, @Amount = 100;
+EXEC AddFundsToWallet @UserID = 10, @Amount = 100;
 
 -- test procedure removing game from cart
 EXEC RemoveGameFromCart @User_ID = 1, @Game_ID = 10;
@@ -556,3 +556,4 @@ drop table System_Requirements
 drop table library
 
 drop table cart
+Delete from Library where USER_ID = 10

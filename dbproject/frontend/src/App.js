@@ -458,8 +458,9 @@ function Homepage() {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.3s ease',
+    maxWidth: '200px', // Ensure consistent button size
     color: 'white', // Set the default color for the button
-    width: '50px', // Ensure consistent button size
+    //width: '50px', // Ensure consistent button size
     height: '50px', // Ensure consistent button size
   }}
   onMouseOver={(e) => {
@@ -927,7 +928,7 @@ function Cart() {
       if (!userId) {
         throw new Error('User not logged in');
       }
-
+      
       const response = await fetch('http://localhost:5000/api/cart/delete', {
         method: 'DELETE',
         headers: {
@@ -954,13 +955,14 @@ function Cart() {
       if (!userId) {
         throw new Error('User not logged in');
       }
-
+      const gameIDs = cartItems.map((item) => item.GameID);
+      console.log('Game IDs for checkout:', gameIDs);
       const response = await fetch('http://localhost:5000/api/purchase', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userID: userId }),
+        body: JSON.stringify({ userID: userId ,gameIDs}),
       });
 
       if (!response.ok) {
@@ -969,7 +971,6 @@ function Cart() {
 
       // Clear the cart after successful checkout
       setCartItems([]);
-      alert('Checkout successful! Your cart is now empty.');
     } catch (error) {
       console.error('Error during checkout:', error);
       alert('Failed to process checkout. Please try again.');
@@ -984,17 +985,108 @@ function Cart() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', // Full viewport height
-      backgroundImage: 'url(/background.jpg)', // Path to the image in the /public/images folder
-      backgroundSize: 'cover', // Ensure the image covers the entire background
-      backgroundPosition: 'center', // Center the image
-      backgroundRepeat: 'no-repeat', // Prevent the image from repeating
-      color: '#333', // Text color to contrast with the background
-      padding: '20px',
-    }}>
-      <h1
-      style={{ margin: '30px 0', fontSize: '32px', color: 'white' }}>Your Cart</h1>
+    <div
+      style={{
+        minHeight: '100vh', // Full viewport height
+        backgroundImage: 'url(/background.jpg)', // Path to the image in the /public/images folder
+        backgroundSize: 'cover', // Ensure the image covers the entire background
+        backgroundPosition: 'center', // Center the image
+        backgroundRepeat: 'no-repeat', // Prevent the image from repeating
+        color: '#333', // Text color to contrast with the background
+        padding: '20px',
+      }}
+    >
+      
+
+      {/* Slip Section */}
+      <div
+      
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background
+        borderRadius: '10px', // Rounded corners
+        padding: '0px 10px', // Add padding to create space inside the strip
+        maxWidth: '1600px', // Limit the width of the slip
+        margin: '10 auto 50px', // Center the slip and reduce spacing below
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)', // Subtle shadow for the slip
+      }}
+      >
+        {/* Cart Title */}
+  <div
+     style={{
+      textAlign: 'center', // Center the text horizontally
+      fontSize: '18px', // Slightly smaller font size
+      fontWeight: 'bold', // Make the text bold
+      color: 'white', // Text color
+      marginBottom: '0px', // Add spacing below the text
+    }}
+  >
+    Cart
+  </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Library Button */}
+          <button
+            onClick={() => navigate('/library')}
+            style={{
+              cursor: 'pointer',
+              background: 'transparent', // Make background transparent
+              border: 'none', // Remove border
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white', // Set the default color for the button
+              fontSize: '16px',
+            }}
+            onMouseOver={(e) => {
+              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+            if (icon) {
+              icon.style.color = '#007bff';
+            }
+            }}
+            onMouseOut={(e) => {
+              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+              if (icon) {
+                icon.style.color = 'white'; // Reset icon color
+              }
+            }}
+          >
+            <i className="fa-solid fa-book" style={{ fontSize: '24px', marginRight: '10px' , visibility:"visible" }}></i>
+            Go to Library
+          </button>
+
+          {/* Homepage Button */}
+          <button
+            onClick={() => navigate('/homepage')}
+            style={{
+              cursor: 'pointer',
+              background: 'transparent', // Make background transparent
+              border: 'none', // Remove border
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white', // Set the default color for the button
+              fontSize: '16px',
+            }}
+            onMouseOver={(e) => {
+              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+              if (icon) {
+                icon.style.color = '#28a745'; // Change icon color to green on hover
+              }
+            }}
+            onMouseOut={(e) => {
+              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+              if (icon) {
+                icon.style.color = 'white'; // Reset icon color to white
+              }
+            }}
+          >
+            <i className="fa-solid fa-home" style={{ fontSize: '24px', marginRight: '10px' }}></i>
+            Go to Homepage
+          </button>
+        </div>
+      </div>
+      
       {cartItems.length > 0 ? (
         <div
         style={{
@@ -1026,11 +1118,9 @@ function Cart() {
               }}
               onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
-                e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)'; // Enhanced shadow on hover
+                e.currentTarget.style.boxShadow = '10px 10px 10px rgba(0, 0, 0, 0.8)'; // Enhanced shadow on hover
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
                 e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Reset shadow
               }}
             >
@@ -1044,7 +1134,7 @@ function Cart() {
                   borderRadius: '0px',
                 }}
               />
-              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.GameID}</h3>
+              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
@@ -1062,6 +1152,15 @@ function Cart() {
         border: 'none',
         borderRadius: '5px',
         cursor: 'pointer',
+        transition: 'box-shadow 0.3s ease, transform 0.3s ease', // Smooth transition for hover effect
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.boxShadow = '0 0 10px 2px rgba(120, 0, 0, 0.8)'; // Red glow effect
+        e.currentTarget.style.transform = 'scale(1.02)'; // Slight zoom effect
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
+        e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
       }}
     >
       Remove
@@ -1084,9 +1183,18 @@ function Cart() {
             border: 'none',
             borderRadius: '5px',
             cursor: 'pointer',
+            transition: 'box-shadow 0.3s ease, transform 0.3s ease', // Smooth transition for hover effect
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 10px 2px rgba(0, 0, 0, 0.8)'; // Green glow effect
+            e.currentTarget.style.transform = 'scale(1.02)'; // Slight zoom effect
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
+            e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
           }}
         >
-          Checkout
+          Purchase
         </button>
       </div>
     </div>
