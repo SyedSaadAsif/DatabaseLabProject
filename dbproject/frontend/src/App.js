@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import GameDetails from './components/GameDetails'; // Import the GameDetails component
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function Homepage() {
@@ -745,7 +746,9 @@ function Homepage() {
               overflow: 'hidden',
               boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
               backgroundColor: 'black',
+              cursor: 'pointer',
             }}
+            onClick={() => navigate(`/game/${game.Game_ID}`, { state: { from: 'store' } })}
     >
       {/* Discount Banner */}
       {game.discount > 0 && (
@@ -867,6 +870,12 @@ function Homepage() {
           {game.rating}/10
         </div>
       </div>
+      <div
+        onClick={() => navigate(`/game/${game.Game_ID}`, { state: { from: 'store' } })}
+        style={{ cursor: 'pointer' }}
+      >
+        {/* Game Card Content */}
+      </div>
     </div>
   ))}
 </div>
@@ -878,7 +887,7 @@ function Cart() {
   const [cartItems, setCartItems] = useState([]); // State to store cart items
   const [loading, setLoading] = useState(true); // State to show loading indicator
   const [error, setError] = useState(null); // State to handle errors
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
@@ -1013,7 +1022,9 @@ function Cart() {
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 maxWidth: '300px', // Prevent the card from stretching too wide
                 //margin: '0 auto',  // Smooth hover effect
+                cursor: 'pointer',
               }}
+              onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
                 e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)'; // Enhanced shadow on hover
@@ -1052,6 +1063,13 @@ function Cart() {
               >
                 Remove
               </button>
+              <div
+                onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
+                style={{ cursor: 'pointer' }}
+              >
+                {/* Game Card Content */}
+              </div>
+
             </div>
           ))}
         </div>
@@ -1765,7 +1783,9 @@ function Library() {
                 overflow: 'hidden',
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
                 backgroundColor: 'black',
+                cursor: 'pointer',
               }}
+              onClick={() => navigate(`/game/${game.Game_ID}`, { state: { from: 'library' } })} // Navigate to GameDetails
             >
               {/* Game Image or Placeholder */}
               {game.Game_poster ? (
@@ -1844,6 +1864,7 @@ function Library() {
                   {game.rating}/10
                 </div>
               </div>
+                {/* Game Card Content */}
             </div>
           ))}
         </div>
@@ -2259,6 +2280,7 @@ function UserProfile() {
   );
 }
 
+
 function App() {
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
 
@@ -2269,8 +2291,9 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/homepage" element={userId ? <Homepage /> : <Login />} />
         <Route path="/user-profile" element={userId ? <UserProfile /> : <Login />} />
-        <Route path="/cart" element={<Cart />} /> {/* Cart Route */}
-        <Route path="/library" element={userId ? <Library /> : <Login />} /> {/* Library Route */}
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/library" element={userId ? <Library /> : <Login />} />
+        <Route path="/game/:gameID" element={<GameDetails />} /> {/* Game Details Route */}
       </Routes>
     </Router>
   );
