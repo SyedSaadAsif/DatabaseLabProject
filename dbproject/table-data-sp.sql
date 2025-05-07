@@ -386,7 +386,8 @@ CREATE VIEW View_All_Games AS
 SELECT Game_ID, Title, [Description], Game_poster, rating, publisher_id, Price, release_date, discount
 FROM
     Game_Catalogue;
-	
+
+GO	
 CREATE PROCEDURE GetGameReviews
     @GameID INT
 AS
