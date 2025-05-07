@@ -335,11 +335,13 @@ app.get('/api/games/all', async (req, res) => {
 
 app.get('/api/reviews/:gameID', async (req, res) => {
     const { gameID } = req.params;
+    const { userID } = req.query; // Get userID from query parameters
     try {
         const pool = await poolPromise;
         const result = await pool.request()
             .input('GameID', sql.Int, gameID)
-            .execute('GetGameReviews'); // Call the stored procedure
+            .input('UserID', sql.Int, userID) // Pass userID to the procedure
+            .execute('GetGameReviews'); // Call the updated procedure
         res.json(result.recordset);
     } catch (err) {
         console.error('Error fetching reviews:', err);
@@ -347,6 +349,30 @@ app.get('/api/reviews/:gameID', async (req, res) => {
     }
 });
 
+// Toggle Like for a Review API
+app.post('/api/review/like', async (req, res) => {
+  const { userID, reviewID, like } = req.body; // `like` determines whether to like or unlike
+  try {
+    const pool = await poolPromise;
+    if (like) {
+      // Increment likes (like the review)
+      await pool.request()
+        .input('UserID', sql.Int, userID)
+        .input('ReviewID', sql.Int, reviewID)
+        .execute('LikeReview');
+    } else {
+      // Decrement likes (unlike the review)
+      await pool.request()
+        .input('UserID', sql.Int, userID)
+        .input('ReviewID', sql.Int, reviewID)
+        .execute('DislikeReview');
+    }
+    res.status(200).json({ message: 'Review like status updated successfully' });
+  } catch (err) {
+    console.error('Error toggling like status:', err);
+    res.status(500).json({ error: 'Failed to toggle like status' });
+  }
+});
 
 const PORT = 5000;
 

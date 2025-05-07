@@ -67,6 +67,14 @@ CREATE TABLE System_Requirements (
     FOREIGN KEY (Game_ID) REFERENCES Game_Catalogue(Game_ID)
 );
 
+CREATE TABLE ReviewLikes (
+    UserID INT NOT NULL,
+    ReviewID INT NOT NULL,
+    PRIMARY KEY (UserID, ReviewID),
+    FOREIGN KEY (UserID) REFERENCES [User](User_ID),
+    FOREIGN KEY (ReviewID) REFERENCES Reviews(Review_ID)
+);
+
 GO
 -- Signup Procedure
 CREATE PROCEDURE Signup
@@ -389,7 +397,8 @@ FROM
 
 GO	
 CREATE PROCEDURE GetGameReviews
-    @GameID INT
+    @GameID INT,
+    @UserID INT -- Add UserID as a parameter
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -399,11 +408,50 @@ BEGIN
         r.Comment,
         r.likes,
         r.Comment_date,
-        u.username
+        u.username,
+        CASE 
+            WHEN rl.UserID IS NOT NULL THEN 1 -- If the user has liked the review
+            ELSE 0 -- If the user has not liked the review
+        END AS liked
     FROM Reviews r
     JOIN [User] u ON r.user_ID = u.User_ID
+    LEFT JOIN ReviewLikes rl ON r.Review_ID = rl.ReviewID AND rl.UserID = @UserID -- Check if the user has liked the review
     WHERE r.game_ID = @GameID
     ORDER BY r.Comment_date DESC; -- Optional: Order by the most recent reviews
+END;
+GO
+
+-- Procedure to Like a Review
+CREATE PROCEDURE LikeReview
+    @UserID INT,
+    @ReviewID INT
+AS
+BEGIN
+    -- Increment the likes for the review
+    UPDATE Reviews
+    SET likes = likes + 1
+    WHERE Review_ID = @ReviewID;
+
+    -- Track that the user liked the review
+    INSERT INTO ReviewLikes (UserID, ReviewID)
+    VALUES (@UserID, @ReviewID);
+END;
+GO
+
+-- Procedure to Dislike a Review
+CREATE PROCEDURE DislikeReview
+    @UserID INT,
+    @ReviewID INT
+AS
+BEGIN
+    -- Decrement the likes for the review
+    UPDATE Reviews
+    SET likes = likes - 1
+    WHERE Review_ID = @ReviewID;
+
+    -- Remove the user's like record
+    DELETE FROM ReviewLikes
+    WHERE UserID = @UserID AND ReviewID = @ReviewID;
 END;
 GO
 

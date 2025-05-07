@@ -29,10 +29,10 @@ function GameDetails() {
 
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/reviews/${gameID}`);
+        const response = await fetch(`http://localhost:5000/api/reviews/${gameID}?userID=${userId}`);
         if (response.ok) {
-          const data = await response.json();
-          setReviews(data);
+            const data = await response.json();
+            setReviews(data); // Set reviews with the `liked` status
         }
       } catch (err) {
         console.error('Failed to fetch reviews:', err);
@@ -79,6 +79,32 @@ function GameDetails() {
   // Handle Play Game
   const handlePlayGame = () => {
     alert(`Launching ${game.Title}...`);
+  };
+
+  // Handle Like Review
+  const handleToggleLikeReview = async (reviewID, isLiked) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/review/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userID: userId, reviewID, like: !isLiked }), // Toggle the like status
+      });
+      if (!response.ok) {
+        throw new Error('Failed to toggle like status');
+      }
+      const updatedReviews = reviews.map((review) =>
+        review.Review_ID === reviewID
+          ? {
+              ...review,
+              likes: isLiked ? review.likes - 1 : review.likes + 1, // Update like count
+              liked: !isLiked, // Toggle liked status
+            }
+          : review
+      );
+      setReviews(updatedReviews);
+    } catch (err) {
+      console.error('Error toggling like status:', err);
+    }
   };
 
   // Determine the context (Library, Store, or Cart)
@@ -190,7 +216,7 @@ function GameDetails() {
             style={{
               padding: '10px 20px',
               fontSize: '16px',
-              backgroundColor: 'blue',
+              backgroundColor: 'green',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
@@ -199,10 +225,10 @@ function GameDetails() {
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = 'white';
-              e.target.style.color = 'blue';
+              e.target.style.color = 'green';
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'blue';
+              e.target.style.backgroundColor = 'green';
               e.target.style.color = 'white';
             }}
           >
@@ -235,23 +261,99 @@ function GameDetails() {
       </div>
 
       {/* Reviews */}
-      <div style={{ marginTop: '20px' }}>
-        <h3>Reviews</h3>
+      <div
+        style={{
+          marginTop: '20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          padding: '20px',
+          borderRadius: '10px',
+        }}
+      >
+        <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '10px',
+    }}
+  >
+    <h3 style={{ fontSize: '1.8rem', margin: 0 }}>Reviews</h3>
+    <button
+      onClick={() => console.log('Add Review button clicked')} // Replace with your add review logic
+      style={{
+        padding: '5px 15px',
+        fontSize: '26px',
+        backgroundColor: 'blue',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'white';
+        e.target.style.color = 'blue';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'blue';
+        e.target.style.color = 'white';
+      }}
+    >+
+    </button>
+  </div>
         {reviews.length > 0 ? (
           reviews.map((review) => (
             <div
               key={review.Review_ID}
               style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
                 padding: '10px',
                 borderRadius: '5px',
                 marginBottom: '10px',
+                position: 'relative',
               }}
             >
               <p>
                 <strong>{review.username}</strong>: {review.Comment}
               </p>
-              <p>Likes: {review.likes}</p>
+              {/* Like Button */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  backgroundColor: review.liked ? 'pink' : 'transparent',
+                  color: 'white',
+                  padding: '5px 10px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onClick={() => handleToggleLikeReview(review.Review_ID, review.liked)}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = 'pink';
+                }}
+                onMouseOut={(e) => {
+                  if (!review.liked) e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>{review.likes}</span> {/* Like count */}
+                  <span style={{ fontSize: '1.5rem' }}>👍</span> {/* Thumbs-up emoji */}
+                </div>
+              </div>
             </div>
           ))
         ) : (
