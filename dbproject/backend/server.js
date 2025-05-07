@@ -115,7 +115,7 @@ app.post('/api/purchase', async (req, res) => {
             .input('userID', userID)
             .input('gameID', gameID)
             .execute('Purchase');
-        res.status(200).json({ message: 'Game purchased successfully' });
+        res.status(200).json({ message: 'Game(s) purchased successfully' });
     } catch (err) {
         console.error('Error during purchase:', err);
         res.status(500).json({ error: 'Failed to purchase game' });
@@ -123,7 +123,7 @@ app.post('/api/purchase', async (req, res) => {
 });
 
 // Add to Cart API
-app.post('/api/cartadd', async (req, res) => {
+app.post('/api/cart/add', async (req, res) => {
     const { userID, gameID } = req.body;
     try {
         const pool = await poolPromise;
@@ -210,18 +210,19 @@ app.post('/api/user/wallet', async (req, res) => {
 });
 
 // Remove Game from Cart
-app.delete('/api/cartdelete', async (req, res) => {
+app.delete('/api/cart/delete', async (req, res) => {
     const { userID, gameID } = req.body;
-
+    if (!userID || !gameID) {
+        return res.status(400).json({ error: 'User ID and Game ID are required' });
+    }
     try {
         const pool = await poolPromise; 
         const result = await pool.request()
             .input('User_ID', sql.Int, userID)
             .input('Game_ID', sql.Int, gameID)
-            .execute('RemoveGameFromCart'); 
+            .execute('RemoveGameFromCart');
 
         const message = result.recordset.length > 0 ? result.recordset[0].message : 'No message returned';
-
         res.json({ message }); 
     } catch (err) {
         console.error('Error removing game from cart:', err);

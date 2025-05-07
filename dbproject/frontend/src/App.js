@@ -910,7 +910,62 @@ function Cart() {
 
     fetchCartItems();
   }, []);
+  const handleRemoveGame = async (GameID) => {
+    
+    try {
+      const userId = localStorage.getItem('userId'); // Get the current user's ID
+      console.log('Game ID to remove:', GameID);
+      if (!userId) {
+        throw new Error('User not logged in');
+      }
 
+      const response = await fetch('http://localhost:5000/api/cart/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userID: userId, gameID: GameID }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove game from cart');
+      }
+
+      // Update the cart items after removal
+      setCartItems((prevItems) => prevItems.filter((item) => item.GameID !== GameID));
+    } catch (error) {
+      console.error('Error removing game from cart:', error);
+      alert('Failed to remove game from cart. Please try again.');
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      const userId = localStorage.getItem('userId'); // Get the current user's ID
+      if (!userId) {
+        throw new Error('User not logged in');
+      }
+
+      const response = await fetch('http://localhost:5000/api/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userID: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process checkout');
+      }
+
+      // Clear the cart after successful checkout
+      setCartItems([]);
+      alert('Checkout successful! Your cart is now empty.');
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Failed to process checkout. Please try again.');
+    }
+  };
   if (loading) {
     return <div>Loading your cart...</div>; // Show loading indicator while fetching data
   }
@@ -930,25 +985,24 @@ function Cart() {
       padding: '20px',
     }}>
       <h1
-      style={{
-        textAlign: 'center', // Center the heading horizontally
-        fontSize: '36px', // Larger font size for emphasis
-        fontWeight: 'bold', // Make the text bold
-        color: '#fff', // White text to contrast with the background
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)', // Add a shadow for better readability
-        marginBottom: '30px', // Add spacing below the heading
-      }}>Cart</h1>
+      style={{ margin: '30px 0', fontSize: '32px', color: 'white' }}>Your Cart</h1>
       {cartItems.length > 0 ? (
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-          }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Responsive grid layout
+          gap: '20px', // Space between grid items
+          justifyContent: 'start', // Center the items horizontally
+          alignItems: 'start', // Align items at the top
+          maxWidth: '1200px', // Maximum width for the grid
+          padding: '20px',
+          margin: '0 auto', // Center the grid container on the page
+
+        }}
         >
           {cartItems.map((item) => (
             <div
-              key={item.Game_ID}
+              key={item.GameID}
               style={{
                 border: '1px solid #ddd', // Softer border color
                 borderRadius: '0px', // Slightly more rounded corners
@@ -956,7 +1010,9 @@ function Cart() {
                 textAlign: 'center',
                 backgroundColor: 'black', // Light grey background for a cleaner look
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Subtle shadow for a card effect
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease', // Smooth hover effect
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                maxWidth: '300px', // Prevent the card from stretching too wide
+                //margin: '0 auto',  // Smooth hover effect
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
@@ -977,16 +1033,47 @@ function Cart() {
                   borderRadius: '0px',
                 }}
               />
-              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
+              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.GameID}</h3>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
-  </div>
+    <button
+                onClick={() => handleRemoveGame(item.GameID)} // Remove game from cart
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 15px',
+                  fontSize: '14px',
+                  backgroundColor: 'red',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                }}
+              >
+                Remove
+              </button>
+            </div>
           ))}
         </div>
       ) : (
-        <p>Your cart is empty.</p>
+        <p style={{ textAlign: 'center', fontSize: '18px', color: '#fff' }}>Your cart is empty.</p>
       )}
+      <div style={{ textAlign: 'center', marginTop: '30px' }}>
+        <button
+          onClick={handleCheckout} // Checkout functionality
+          style={{
+            padding: '15px 30px',
+            fontSize: '16px',
+            backgroundColor: 'green',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Checkout
+        </button>
+      </div>
     </div>
   );
 }
