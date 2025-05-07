@@ -86,10 +86,20 @@ function Homepage() {
     },
   });
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = async (e) => {
     e.preventDefault();
-    console.log('Search triggered:', searchQuery); // Placeholder for search functionality
-    // Add your search logic here
+    try {
+      filterData.title = searchQuery; // Set the title filter to the search query
+      const queryParams = new URLSearchParams(filterData).toString();
+      const response = await fetch(`http://localhost:5000/api/search?${queryParams}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch searched games');
+      }
+      const data = await response.json();
+      setGames(data); // Update games with searched data
+    } catch (error) {
+      console.error('Error applying search:', error);
+    }
   };
 
   // Sorting logic
@@ -527,52 +537,52 @@ function Homepage() {
   {/* Search Bar */}
   {showSearchBar && (
     <form
-      onSubmit={handleSearchSubmit}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderRadius: '25px',
-        padding: '5px 10px',
-        transition: 'all 0.3s ease',
-        width: '200px',
-        position: 'absolute', // Position it relative to the parent container
-        right: '60px', // Adjust the position to the left of the search icon
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Search"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{
-          border: 'none',
-          outline: 'none',
-          flex: 1,
-          padding: '5px',
-          borderRadius: '25px',
-          fontSize: '16px',
-        }}
-      />
-      <button
-        type="submit"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'black',
-        }}
-      >
-        <i
-  className="fa fa-arrow-right"
+  onSubmit={handleSearchSubmit} // Ensure this is correctly linked
   style={{
-    fontSize: '18px',
-    marginLeft: '-24px', // Adjust this value to move it left
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: '25px',
+    padding: '5px 10px',
+    transition: 'all 0.3s ease',
+    width: '200px',
+    position: 'absolute',
+    right: '60px',
   }}
-></i>
+>
+  <input
+    type="text"
+    placeholder="Search"
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)} // Update search query state
+    style={{
+      border: 'none',
+      outline: 'none',
+      flex: 1,
+      padding: '5px',
+      borderRadius: '25px',
+      fontSize: '16px',
+    }}
+  />
+  <button
+    type="submit" // Ensure the button type is "submit"
+    style={{
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      color: 'black',
+    }}
+  >
+    <i
+      className="fa fa-arrow-right"
+      style={{
+        fontSize: '18px',
+        marginLeft: '-24px',
+      }}
+    ></i>
+  </button>
+</form>
 
-      </button>
-    </form>
   )}
 
   {/* Search Button */}
@@ -748,8 +758,17 @@ function Homepage() {
               boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
               backgroundColor: 'black',
               cursor: 'pointer',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             }}
             onClick={() => navigate(`/game/${game.Game_ID}`, { state: { from: 'store' } })}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom effect
+              e.currentTarget.style.boxShadow = '10px 10px 10px rgba(0, 0, 0, 0.8)'; // Enhanced shadow
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)'; // Reset shadow
+            }}
     >
       {/* Discount Banner */}
       {game.discount > 0 && (
@@ -1889,8 +1908,17 @@ function Library() {
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
                 backgroundColor: 'black',
                 cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               }}
               onClick={() => navigate(`/game/${game.Game_ID}`, { state: { from: 'library' } })} // Navigate to GameDetails
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom effect
+                e.currentTarget.style.boxShadow = '10px 10px 10px rgba(0, 0, 0, 0.8)'; // Enhanced shadow
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)'; // Reset shadow
+              }}
             >
               {/* Game Image or Placeholder */}
               {game.Game_poster ? (
