@@ -176,9 +176,38 @@ CREATE PROCEDURE ViewGameDetails
     @GameID INT
 AS
 BEGIN
-    SELECT *
-    FROM Game_Catalogue
-    WHERE Game_ID = @GameID;
+    SELECT 
+        gc.Game_ID,
+        gc.Title,
+        gc.Description,
+        gc.Game_poster,
+        gc.rating,
+        gc.Price,
+        gc.release_date,
+        gc.discount,
+        u.username AS Publisher,
+        sr.Processor,
+        sr.Gpu,
+        sr.Ram,
+        sr.Storage,
+        sr.OS,
+        sr.DXD3_version,
+        (
+            SELECT 
+                COUNT(*) 
+            FROM 
+                Reviews r 
+            WHERE 
+                r.game_ID = gc.Game_ID
+        ) AS Total_Reviews
+    FROM 
+        Game_Catalogue gc
+    LEFT JOIN 
+        [User] u ON gc.publisher_id = u.User_ID
+    LEFT JOIN 
+        System_Requirements sr ON gc.Game_ID = sr.Game_ID
+    WHERE 
+        gc.Game_ID = @GameID;
 END;
 GO
 -- for adding review of a ggame 

@@ -1024,6 +1024,7 @@ function Cart() {
                 //margin: '0 auto',  // Smooth hover effect
                 cursor: 'pointer',
               }}
+              onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)'; // Slight zoom on hover
                 e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)'; // Enhanced shadow on hover
@@ -1048,27 +1049,24 @@ function Cart() {
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
     <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
     <button
-                onClick={() => handleRemoveGame(item.GameID)} // Remove game from cart
-                style={{
-                  marginTop: '10px',
-                  padding: '10px 15px',
-                  fontSize: '14px',
-                  backgroundColor: 'red',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                }}
-              >
-                Remove
-              </button>
-              <div
-                onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
-                style={{ cursor: 'pointer' }}
-              >
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent the parent card's onClick from being triggered
+        handleRemoveGame(item.GameID); // Perform the remove functionality
+      }}
+      style={{
+        marginTop: '10px',
+        padding: '10px 15px',
+        fontSize: '14px',
+        backgroundColor: 'red',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+      }}
+    >
+      Remove
+    </button>
                 {/* Game Card Content */}
-              </div>
-
             </div>
           ))}
         </div>
