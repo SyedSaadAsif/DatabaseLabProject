@@ -2109,26 +2109,26 @@ function UserProfile() {
   };
 
   // Handle photo upload
-  const handlePhotoUpload = async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-          const formData = new FormData();
-          formData.append('photo', file);
-          formData.append('userID', userId);
+  // const handlePhotoUpload = async (e) => {
+  //     const file = e.target.files[0];
+  //     if (file) {
+  //         const formData = new FormData();
+  //         formData.append('photo', file);
+  //         formData.append('userID', userId);
 
-          try {
-              const response = await fetch('http://localhost:5000/api/user/photo', {
-                  method: 'POST',
-                  body: formData,
-              });
-              const data = await response.json();
-              alert(data.message); // Show success message
-              setUserProfile((prev) => ({ ...prev, photo: `/images/${data.newPhoto}` })); // Update photo locally
-          } catch (error) {
-              console.error('Error uploading photo:', error);
-          }
-      }
-  };
+  //         try {
+  //             const response = await fetch('http://localhost:5000/api/user/photo', {
+  //                 method: 'POST',
+  //                 body: formData,
+  //             });
+  //             const data = await response.json();
+  //             alert(data.message); // Show success message
+  //             setUserProfile((prev) => ({ ...prev, photo: `/images/${data.newPhoto}` })); // Update photo locally
+  //         } catch (error) {
+  //             console.error('Error uploading photo:', error);
+  //         }
+  //     }
+  // };
 
   return (
       <div
@@ -2146,7 +2146,7 @@ function UserProfile() {
           }}
       >
           {/* User Photo */}
-          <div style={{ position: 'relative', marginBottom: '20px' }}>
+          {/* <div style={{ position: 'relative', marginBottom: '20px' }}>
               <img
                   src={userProfile.photo}
                   alt="User"
@@ -2180,7 +2180,7 @@ function UserProfile() {
                   style={{ display: 'none' }}
                   onChange={handlePhotoUpload}
               />
-          </div>
+          </div> */}
 
           {/* Username and Account Level */}
           <h1 style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -2379,34 +2379,53 @@ function UserProfile() {
 </div>
 
           {/* Save Changes and Back to Homepage */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
-              <button
-                  onClick={handleProfileUpdate}
-                  style={{
-                      padding: '10px 20px',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      backgroundColor: 'blue',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '25px',
-                  }}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '210px', marginTop: '30px' }}>
+        <button
+          onClick={handleProfileUpdate}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: 'green',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = 'white';
+            e.target.style.color = 'green';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = 'green';
+            e.target.style.color = 'white';
+          }}
               >
                   Save Changes
-              </button>
-              <button
-                  onClick={() => navigate('/homepage')}
-                  style={{
-                      padding: '10px 20px',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      backgroundColor: 'red',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '25px',
-                  }}
+                  </button>
+        <button
+          onClick={() => navigate(-1)} // Navigate back to the previous page
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: 'red',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            transition: 'all 0.3s ease',
+            transform: 'translate(20px, 0px)', // Move 50px right and 20px down
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = 'white';
+            e.target.style.color = 'red';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = 'red';
+            e.target.style.color = 'white';
+          }}
               >
-                  Back to Homepage
+                  Back 
               </button>
           </div>
       </div>
