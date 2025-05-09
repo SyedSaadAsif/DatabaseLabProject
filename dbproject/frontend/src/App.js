@@ -2037,6 +2037,7 @@ function UserProfile() {
       wallet: 0,
   }); // User profile data
   const [newFunds, setNewFunds] = useState(0); // Amount to add to wallet
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId'); // Get logged-in user's ID from localStorage
 
@@ -2048,14 +2049,20 @@ function UserProfile() {
               if (!response.ok) {
                   throw new Error('Failed to fetch user profile');
               }
-              const data = await response.json();
+              const data = await response.json(); 
+
+               // Format the birthDate to 'YYYY-MM-DD'
+            const formattedBirthDate = data.date_of_birth
+                ? new Date(data.date_of_birth).toISOString().split('T')[0]
+                : '';
+
               setUserProfile({
                   username: data.username,
                   photo: `/images/${data.user_profile_image}`, // Use the image path from the database
-                  accountLevel: data.account_level,
+                  accountLevel: data.Account_Level,
                   password: '********', // Mask the password
                   email: data.email,
-                  birthDate: data.date_of_birth,
+                  birthDate: formattedBirthDate,
                   wallet: data.wallet,
               });
           } catch (error) {
@@ -2186,19 +2193,31 @@ function UserProfile() {
           <h1 style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               Hey! {userProfile.username}
               <span
-                  style={{
-                      backgroundColor: 'lightblue',
-                      color: 'black',
-                      padding: '5px 10px',
-                      borderRadius: '50%',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      transform: 'translateY(5px)',
-                  }}
+                 style={{
+                  background: 'linear-gradient(135deg, rgb(155, 217, 255), rgb(2, 16, 207), rgb(255, 255, 255))', // Add a mix of colors
+                  backgroundSize: '200% 200%', // Larger background for smoother blending
+                  animation: 'gradientBlend 4s linear infinite', // Faster and smoother animation
+                  color: 'white', // Ensure text is prominently visible
+                  padding: '10px 15px', // Adjust padding for better spacing
+                  borderRadius: '50%', // Make it a circle
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  display: 'flex', // Center content inside the circle
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '20px', // Ensure consistent circle size
+                  height: '25px', // Ensure consistent circle size
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)', // Subtle shadow for better visibility
+                }}
+                  
+  
               >
                   {userProfile.accountLevel}
               </span>
           </h1>
+
+          
+
 
           {/* Editable Fields */}
           <div style={{ marginBottom: '15px', width: '30%' }}>
@@ -2233,36 +2252,53 @@ function UserProfile() {
               </div>
           </div>
           <div style={{ marginBottom: '15px', width: '30%' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
-              <div style={{ position: 'relative' }}>
-                  <input
-                      type="password"
-                      value={userProfile.password}
-                      onChange={(e) => setUserProfile({ ...userProfile, password: e.target.value })}
-                      style={{
-                          width: '100%',
-                          padding: '10px',
-                          fontSize: '16px',
-                          border: '1px solid #ccc',
-                          borderRadius: '25px',
-                          backgroundColor: 'white',
-                      }}
-                  />
-                  <i
-                      className="fa fa-pen"
-                      style={{
-                          position: 'absolute',
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          fontSize: '16px',
-                          cursor: 'pointer',
-                          color: 'blue',
-                      }}
-                      title="Editable"
-                  ></i>
-              </div>
-          </div>
+  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
+  <div style={{ position: 'relative' }}>
+    <input
+      type={showPassword ? 'text' : 'password'} // Toggle input type
+      value={userProfile.password}
+      onChange={(e) => setUserProfile({ ...userProfile, password: e.target.value })}
+      style={{
+        width: '100%',
+        padding: '10px',
+        fontSize: '16px',
+        border: '1px solid #ccc',
+        borderRadius: '25px',
+        backgroundColor: 'white',
+        paddingRight: '15px', // Add space for the icons
+      }}
+    />
+    {/* Eye Icon for Toggling Password Visibility */}
+    <i
+      className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} // Change icon based on visibility
+      style={{
+        position: 'absolute',
+        right: '35px', // Position the eye icon
+        top: '50%',
+        transform: 'translateY(-50%)',
+        fontSize: '16px',
+        cursor: 'pointer',
+        color: 'black',
+      }}
+      onClick={() => setShowPassword(!showPassword)} // Toggle password visibility
+      title={showPassword ? 'Hide Password' : 'Show Password'} // Tooltip for the icon
+    ></i>
+    {/* Pen Icon for Editing */}
+    <i
+      className="fa fa-pen"
+      style={{
+        position: 'absolute',
+        right: '10px', // Position the pen icon
+        top: '50%',
+        transform: 'translateY(-50%)',
+        fontSize: '16px',
+        cursor: 'pointer',
+        color: 'blue',
+      }}
+      title="Editable"
+    ></i>
+  </div>
+</div>
           <div style={{ marginBottom: '15px', width: '30%' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
               <div style={{ position: 'relative' }}>
