@@ -114,14 +114,16 @@ app.post('/api/purchase', async (req, res) => {
     }
     try {
         const pool = await poolPromise;
-        for(const gameID of gameIDs) {
-        console.log("Processing purchase for User ID:", userID, "Game ID:", gameID);
-        await pool.request()
-        .input('userID', sql.Int, userID) // Ensure userID is passed as an integer
-        .input('gameID', sql.Int, gameID) // Pass each gameID as an integer
-        .execute('Purchase'); 
+        let statusMessages = [];
+        for (const gameID of gameIDs) {
+            const result = await pool.request()
+                .input('userID', sql.Int, userID)
+                .input('gameID', sql.Int, gameID)
+                .output('statusMessage', sql.NVarChar(255)) // Capture the output message
+                .execute('Purchase');
+            statusMessages.push(result.output.statusMessage);
         }
-        res.status(200).json({ message: 'Game(s) purchased successfully' });
+        res.status(200).json({ messages: statusMessages });
     } catch (err) {
         console.error('Error during purchase:', err);
         res.status(500).json({ error: 'Failed to purchase game' });
@@ -147,12 +149,30 @@ app.post('/api/cart/add', async (req, res) => {
 // View Game Details API
 app.get('/api/game/:gameID', async (req, res) => {
     const { gameID } = req.params;
+    const { userID } = req.query; // Get UserID from query parameters
+
+    if (!userID) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
     try {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('GameID', gameID)
+            .input('GameID', sql.Int, gameID)
+            .input('UserID', sql.Int, userID)
+            .output('HasGame', sql.Bit) // Capture the output parameter
             .execute('ViewGameDetails');
-        res.json(result.recordset[0]);
+
+        const gameDetails = result.recordset[0];
+        const hasGame = result.output.HasGame;
+
+        // Include Last_played and Purchase_date in the response if the user owns the game
+        res.json({
+            ...gameDetails,
+            hasGame,
+            lastPlayed: hasGame ? gameDetails.Last_played || null : null,
+            purchaseDate: hasGame ? gameDetails.Purchase_date || null : null,
+        });
     } catch (err) {
         console.error('Error fetching game details:', err);
         res.status(500).json({ error: 'Failed to fetch game details' });
@@ -372,6 +392,21 @@ app.post('/api/review/like', async (req, res) => {
     console.error('Error toggling like status:', err);
     res.status(500).json({ error: 'Failed to toggle like status' });
   }
+});
+
+app.post('/api/game/play', async (req, res) => {
+    const { userID, gameID } = req.body;
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('UserID', sql.Int, userID)
+            .input('GameID', sql.Int, gameID)
+            .execute('UpdateLastPlayed');
+        res.status(200).json({ message: 'Last played date updated successfully' });
+    } catch (err) {
+        console.error('Error updating last played date:', err);
+        res.status(500).json({ error: 'Failed to update last played date' });
+    }
 });
 
 const PORT = 5000;

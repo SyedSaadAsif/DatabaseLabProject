@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import './GameDetails.css'; // Import the CSS file for styling
 
 function GameDetails() {
   const { gameID } = useParams();
@@ -10,16 +11,21 @@ function GameDetails() {
   const [error, setError] = useState(null);
   const [reviews, setReviews] = useState([]);
   const userId = localStorage.getItem('userId');
+  const [showReviewField, setShowReviewField] = useState(false); // State to toggle the text field
+  const [newReview, setNewReview] = useState(''); // State to store the new review text
+  const [hasGame, setHasGame] = useState(false); // State to track if the user owns the game
+  const [showNotification, setShowNotification] = useState(false); // Updated state
 
   useEffect(() => {
     const fetchGameDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/game/${gameID}`);
+        const response = await fetch(`http://localhost:5000/api/game/${gameID}?userID=${userId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch game details');
         }
         const data = await response.json();
         setGame(data);
+        setHasGame(data.hasGame); // Set the hasGame state
       } catch (err) {
         setError(err.message || 'Failed to load game details');
       } finally {
@@ -50,36 +56,67 @@ function GameDetails() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID: userId, gameID }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to add game to cart');
+      const data = await response.json();
+      if (response.ok) {
+        setShowNotification({ message: 'Game added to cart successfully!', type: 'success' }); // Success notification
+      } else {
+        throw new Error(data.error || 'Failed to add game to cart');
       }
-      alert('Game added to cart successfully!');
     } catch (err) {
-      alert(err.message || 'Failed to add game to cart');
+      setShowNotification({ message: err.message || 'Failed to add game to cart', type: 'error' }); // Error notification
+    } finally {
+      // Automatically hide the notification after 3 seconds
+      setTimeout(() => setShowNotification(false), 3000);
     }
-  };
+};
 
   const handleBuyNow = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userID: userId, gameID }),
+        body: JSON.stringify({ userID: userId, gameIDs: [gameID] }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to purchase game');
+      const data = await response.json();
+      if (response.ok) {
+        setShowNotification({ message: data.messages.join('\n'), type: 'success' }); // Success notification
+        // Refresh the page after a short delay
+        if (data.messages == 'Purchase successful.')
+          setTimeout(() => window.location.reload(), 3000);
+      } else {
+        throw new Error(data.error || 'Failed to purchase game');
       }
-      alert('Game purchased successfully!');
-      navigate('/library');
     } catch (err) {
-      alert(err.message || 'Failed to purchase game');
+      setShowNotification({ message: err.message || 'Failed to purchase game', type: 'error' }); // Error notification
+    } finally {
+      // Automatically hide the notification after 3 seconds
+      setTimeout(() => setShowNotification(false), 3000);
     }
   };
 
   // Handle Play Game
-  const handlePlayGame = () => {
-    alert(`Launching ${game.Title}...`);
-  };
+  const handlePlayGame = async () => {
+    setShowNotification({ message: `Launching ${game.Title}...`, type: 'success' }); // Success notification
+
+    // Automatically hide the notification after 3 seconds
+    setTimeout(() => setShowNotification(false), 3000);
+
+    try {
+        const response = await fetch('http://localhost:5000/api/game/play', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userID: userId, gameID }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update last played date');
+        }
+        setTimeout(() => window.location.reload(), 3000);
+        console.log('Last played date updated successfully');
+    } catch (err) {
+        console.error('Error updating last played date:', err);
+    }
+};
 
   // Handle Like Review
   const handleToggleLikeReview = async (reviewID, isLiked) => {
@@ -107,6 +144,31 @@ function GameDetails() {
     }
   };
 
+  const handleAddReview = async () => {
+    if (!newReview.trim()) {
+      alert('Review cannot be empty!');
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:5000/api/review/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userID: userId, gameID, comment: newReview }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add review');
+      }
+      alert('Review added successfully!');
+      setNewReview(''); // Clear the text field
+      setShowReviewField(false); // Hide the text field
+      // Optionally, refresh the reviews list
+      const updatedReviews = await response.json();
+      setReviews((prevReviews) => [...prevReviews, updatedReviews]);
+    } catch (err) {
+      alert(err.message || 'Failed to add review');
+    }
+  };
+
   // Determine the context (Library, Store, or Cart)
   const getContext = () => {
     if (location.state?.from === 'library') return 'library';
@@ -131,132 +193,228 @@ function GameDetails() {
         padding: '20px',
       }}
     >
+      {/* Notification */}
+      {showNotification && (
+        <div
+          className={`notification ${showNotification.type === 'success' ? 'success' : 'error'}`}
+        >
+          <p>{showNotification.message}</p>
+        </div>
+      )}
+
       <div
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           borderRadius: '10px',
           padding: '20px',
           display: 'flex',
-          flexDirection: 'column',
           gap: '20px',
           position: 'relative',
         }}
       >
+        {/* Game Poster */}
+        <div style={{ flex: '0 0 30%', textAlign: 'center' }}>
+          <img
+            src={`/images/${game.Game_poster}`}
+            alt={`${game.Title} Poster`}
+            style={{
+              width: '100%',
+              height: 'auto',
+              borderRadius: '10px',
+            }}
+          />
+        </div>
+
         {/* Title and Description */}
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ margin: 0 }}>{game.Title}</h1>
-            <h3>Description</h3>
-            <p>{game.Description}</p>
-          </div>
-          <div style={{ textAlign: 'right', marginTop: '-18px'}}>
-            {/* Discount and Rating */}
-            {game.discount > 0 && (
+        <div style={{ flex: '1' , marginLeft: '20px'}}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>
+              <div
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  padding: '15px',
+                  borderRadius: '10px',
+                  marginBottom: '20px',
+                  flex: '1',
+                }}
+              >
+                <h1 style={{ margin: 0 }}>{game.Title}</h1>
+                <h3>Description</h3>
+                <p>{game.Description}</p>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', marginTop: '-18px' }}>
+              {/* Discount and Rating */}
+              {!hasGame && game.discount > 0 && (
+                    <p
+                    style={{
+                      backgroundColor: 'yellow',
+                      color: 'black',
+                      padding: '5px 10px',
+                      borderRadius: '5px',
+                      display: 'inline-block',
+                      marginRight: '10px',
+                    }}
+                  >
+                    Discount: {game.discount}%
+                  </p>
+                  )}
               <p
                 style={{
-                  backgroundColor: 'yellow',
-                  color: 'black',
+                  backgroundColor: 'green',
+                  color: 'white',
                   padding: '5px 10px',
                   borderRadius: '5px',
                   display: 'inline-block',
-                  marginRight: '10px',
                 }}
               >
-                Discount: {game.discount}%
+                Rating: {game.rating}/10
               </p>
-            )}
-            <p
+            </div>
+          </div>
+
+          {/* Publisher and Other Details */}
+          <div>
+            <div
               style={{
-                backgroundColor: 'green',
-                color: 'white',
-                padding: '5px 10px',
-                borderRadius: '5px',
-                display: 'inline-block',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                padding: '15px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                flex: '1',
               }}
             >
-              Rating: {game.rating}/10
-            </p>
+              <h3>Details</h3>
+              <p>Publisher: {game.Publisher}</p>
+              <p>Release Date: {new Date(game.release_date).toLocaleDateString()}</p>
+
+              {hasGame ? (
+                <>
+                  <p>
+                    Purchased Date: {game.purchaseDate ? new Date(game.purchaseDate).toLocaleDateString() : 'N/A'}
+                  </p>
+                  <p>
+                    Last Played: {game.lastPlayed ? new Date(game.lastPlayed).toLocaleDateString() : 'N/A'}
+                  </p>
+                </>
+              ) : (
+                // Show price and discount if the user doesn't own the game
+                <>
+                  <p>Price: ${game.Price}</p>
+                  {discountedPrice && <p>Discounted Price: ${discountedPrice}</p>}
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Publisher and Other Details */}
-        <div>
-          <h3>Details</h3>
-          <p>Publisher: {game.Publisher}</p>
-          <p>Release Date: {new Date(game.release_date).toLocaleDateString()}</p>
-          <p>Price: ${game.Price}</p>
-          {discountedPrice && <p>Discounted Price: ${discountedPrice}</p>}
-        </div>
+          {/* Game Requirements */}
+          <div>
+            <div
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                padding: '15px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                flex: '1',
+              }}
+            >
+              <h3>System Requirements</h3>
+              <ul>
+                <li>Processor: {game.Processor}</li>
+                <li>GPU: {game.Gpu}</li>
+                <li>RAM: {game.Ram}</li>
+                <li>Storage: {game.Storage}</li>
+                <li>OS: {game.OS}</li>
+                <li>DirectX: {game.DXD3_version}</li>
+              </ul>
+            </div>
+          </div>
 
-        {/* Game Requirements */}
-        <div>
-          <h3>System Requirements</h3>
-          <ul>
-            <li>Processor: {game.Processor}</li>
-            <li>GPU: {game.Gpu}</li>
-            <li>RAM: {game.Ram}</li>
-            <li>Storage: {game.Storage}</li>
-            <li>OS: {game.OS}</li>
-            <li>DirectX: {game.DXD3_version}</li>
-          </ul>
-        </div>
-
-        {/* Buttons */}
+          {/* Add to Cart and Buy Now Buttons */}
+          {/* Buttons */}
         <div
           style={{
-            position: 'absolute',
-            bottom: '20px',
-            right: '20px',
             display: 'flex',
+            justifyContent: 'flex-end',
             gap: '10px',
+            marginTop: '20px',
           }}
         >
-          <button
-            onClick={handleAddToCart}
-            style={{
-              padding: '10px 20px',
-              fontSize: '16px',
-              backgroundColor: 'green',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.color = 'green';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'green';
-              e.target.style.color = 'white';
-            }}
-          >
-            Add to Cart
-          </button>
-          <button
-            onClick={handleBuyNow}
-            style={{
-              padding: '10px 20px',
-              fontSize: '16px',
-              backgroundColor: 'orange',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.color = 'orange';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'orange';
-              e.target.style.color = 'white';
-            }}
-          >
-            Buy Now
-          </button>
+          {hasGame ? (
+              <button
+                onClick={handlePlayGame}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  backgroundColor: 'green',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.color = 'green';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.backgroundColor = 'green';
+                  e.target.style.color = 'white';
+                }}
+              >
+                Play Now
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleAddToCart}
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '16px',
+                    backgroundColor: 'green',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = 'white';
+                    e.target.style.color = 'green';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = 'green';
+                    e.target.style.color = 'white';
+                  }}
+                >
+                  Add to Cart
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '16px',
+                    backgroundColor: 'orange',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = 'white';
+                    e.target.style.color = 'orange';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = 'orange';
+                    e.target.style.color = 'white';
+                  }}
+                >
+                  Buy Now
+                </button>
+              </>
+            )}
+        </div>
         </div>
       </div>
 
@@ -270,21 +428,48 @@ function GameDetails() {
         }}
       >
         <div
-    style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '10px',
-    }}
-  >
-    <h3 style={{ fontSize: '1.8rem', margin: 0 }}>Reviews</h3>
+  style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '10px',
+  }}
+>
+  <h3 style={{ fontSize: '1.8rem', margin: 0 }}>Reviews</h3>
+  {hasGame && (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    {showReviewField && (
+      <input
+        type="text"
+        value={newReview}
+        onChange={(e) => setNewReview(e.target.value)}
+        placeholder="Write your review..."
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            console.log('Review:', newReview); // Log the review to the console
+            setNewReview(''); // Clear the input field
+            setShowReviewField(false); // Close the input field
+          }
+        }}
+        style={{
+          padding: '10px 10px',
+          fontSize: '16px',
+          borderRadius: '5px',
+          border: '1px solid #ccc',
+          outline: 'none',
+          width: '500px',
+        }}
+      />
+    )}
     <button
-      onClick={() => console.log('Add Review button clicked')} // Replace with your add review logic
+      onClick={() => {
+        setShowReviewField((prev) => !prev); // Toggle the input field
+      }}
       style={{
         padding: '5px 15px',
         fontSize: '26px',
-        backgroundColor: 'blue',
-        color: 'white',
+        backgroundColor: showReviewField ? 'white' : 'blue', // Change color when input is open
+        color: showReviewField ? 'blue' : 'white', // Change text color when input is open
         border: 'none',
         borderRadius: '5px',
         cursor: 'pointer',
@@ -294,16 +479,24 @@ function GameDetails() {
         gap: '5px',
       }}
       onMouseOver={(e) => {
-        e.target.style.backgroundColor = 'white';
-        e.target.style.color = 'blue';
+        if (!showReviewField) {
+          e.target.style.backgroundColor = 'white';
+          e.target.style.color = 'blue';
+        }
       }}
       onMouseOut={(e) => {
-        e.target.style.backgroundColor = 'blue';
-        e.target.style.color = 'white';
+        if (!showReviewField) {
+          e.target.style.backgroundColor = 'blue';
+          e.target.style.color = 'white';
+        }
       }}
-    >+
+    >
+      +
     </button>
   </div>
+  )}
+</div>
+
         {reviews.length > 0 ? (
           reviews.map((review) => (
             <div

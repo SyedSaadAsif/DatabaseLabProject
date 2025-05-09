@@ -143,21 +143,36 @@ GO
 -- Purchase Procedure
 CREATE PROCEDURE Purchase
     @userID INT,
-    @gameID INT
+    @gameID INT,
+    @statusMessage NVARCHAR(255) OUTPUT -- Add an output parameter for status
 AS
 BEGIN
     DECLARE @gamePrice DECIMAL(10,2), @userWallet INT;
     SELECT @gamePrice = Price FROM Game_Catalogue WHERE Game_ID = @gameID;
     SELECT @userWallet = wallet FROM [User] WHERE User_ID = @userID;
-    
+
     IF @userWallet >= @gamePrice
     BEGIN
+        -- Deduct the price from the wallet
         UPDATE [User] SET wallet = wallet - @gamePrice WHERE User_ID = @userID;
-		EXEC RemoveGameFromCart @User_ID = @userid , @Game_ID = @gameID
+
+        -- Remove the game from the cart if it exists
+        EXEC RemoveGameFromCart @User_ID = @userID, @Game_ID = @gameID;
+
+        -- Add the game to the user's library
         INSERT INTO Library (User_ID, game_ID, Purchase_date, Last_played, Play_time)
         VALUES (@userID, @gameID, GETDATE(), GETDATE(), 0);
+
+        -- Set success message
+        SET @statusMessage = 'Purchase successful.';
+    END
+    ELSE
+    BEGIN
+        -- Set failure message
+        SET @statusMessage = 'Insufficient funds in wallet.';
     END
 END;
+GO
 exec Purchase 10,14
 GO
 -- add to cart
@@ -181,9 +196,22 @@ END;
 GO
 -- view the details of a game in store
 CREATE PROCEDURE ViewGameDetails
-    @GameID INT
+    @GameID INT,
+    @UserID INT, -- Add UserID as a parameter
+    @HasGame BIT OUTPUT -- Add an output parameter for the boolean variable
 AS
 BEGIN
+    -- Check if the user owns the game
+    IF EXISTS (SELECT 1 FROM Library WHERE User_ID = @UserID AND Game_ID = @GameID)
+    BEGIN
+        SET @HasGame = 1; -- User owns the game
+    END
+    ELSE
+    BEGIN
+        SET @HasGame = 0; -- User does not own the game
+    END
+
+    -- Select game details
     SELECT 
         gc.Game_ID,
         gc.Title,
@@ -207,13 +235,24 @@ BEGIN
                 Reviews r 
             WHERE 
                 r.game_ID = gc.Game_ID
-        ) AS Total_Reviews
+        ) AS Total_Reviews,
+        -- Include Last_played and Purchase_date if the user owns the game
+        CASE 
+            WHEN @HasGame = 1 THEN l.Last_played
+            ELSE NULL
+        END AS Last_played,
+        CASE 
+            WHEN @HasGame = 1 THEN l.Purchase_date
+            ELSE NULL
+        END AS Purchase_date
     FROM 
         Game_Catalogue gc
     LEFT JOIN 
         [User] u ON gc.publisher_id = u.User_ID
     LEFT JOIN 
         System_Requirements sr ON gc.Game_ID = sr.Game_ID
+    LEFT JOIN 
+        Library l ON l.Game_ID = gc.Game_ID AND l.User_ID = @UserID -- Join with Library to get Last_played and Purchase_date
     WHERE 
         gc.Game_ID = @GameID;
 END;
@@ -452,6 +491,17 @@ BEGIN
     -- Remove the user's like record
     DELETE FROM ReviewLikes
     WHERE UserID = @UserID AND ReviewID = @ReviewID;
+END;
+GO
+
+CREATE PROCEDURE UpdateLastPlayed
+    @UserID INT,
+    @GameID INT
+AS
+BEGIN
+    UPDATE Library
+    SET Last_played = GETDATE()
+    WHERE User_ID = @UserID AND Game_ID = @GameID;
 END;
 GO
 
