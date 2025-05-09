@@ -414,17 +414,53 @@ CREATE PROCEDURE RemoveReview
     @Review_ID INT
 AS
 BEGIN
+    -- Check if the review exists
     IF NOT EXISTS (SELECT 1 FROM Reviews WHERE Review_ID = @Review_ID)
     BEGIN
         SELECT 'No review found with the specified Review_ID.' AS message;
         RETURN;
     END
 
+    -- Delete related rows in ReviewLikes
+    DELETE FROM ReviewLikes
+    WHERE ReviewID = @Review_ID;
+
+    -- Delete the review
     DELETE FROM Reviews
     WHERE Review_ID = @Review_ID;
 
     SELECT 'Review removed successfully.' AS message;
 END;
+GO
+
+CREATE PROCEDURE ViewUserProfile
+    @User_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Check if the user exists
+    IF EXISTS (SELECT 1 FROM [User] WHERE User_ID = @User_ID)
+    BEGIN
+        -- Retrieve the user's profile details
+        SELECT 
+            username,
+			[password],
+            Account_Level,
+            email,
+            date_of_birth,
+            wallet
+        FROM [User]
+        WHERE User_ID = @User_ID;
+    END
+    ELSE
+    BEGIN
+        -- Return a message if the user is not found
+        SELECT 
+            'User not found' AS message;
+    END
+END;
+
 GO
 -- View to view all games
 CREATE VIEW View_All_Games AS 

@@ -741,9 +741,13 @@ function Homepage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginTop: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Responsive grid layout
+          gap: '20px', // Space between grid items
+          justifyContent: 'start', // Align items to the start
+          alignItems: 'start', // Align items at the top
+          maxWidth: '1200px', // Maximum width for the grid
+          padding: '20px',
+          margin: '0 auto', // Center the grid container on the page
         }}
       >
         {games.map((game) => (
@@ -908,6 +912,7 @@ function Cart() {
   const [loading, setLoading] = useState(true); // State to show loading indicator
   const [error, setError] = useState(null); // State to handle errors
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
@@ -939,15 +944,14 @@ function Cart() {
 
     fetchCartItems();
   }, []);
+
   const handleRemoveGame = async (GameID) => {
-    
     try {
       const userId = localStorage.getItem('userId'); // Get the current user's ID
-      console.log('Game ID to remove:', GameID);
       if (!userId) {
         throw new Error('User not logged in');
       }
-      
+
       const response = await fetch('http://localhost:5000/api/cart/delete', {
         method: 'DELETE',
         headers: {
@@ -975,13 +979,13 @@ function Cart() {
         throw new Error('User not logged in');
       }
       const gameIDs = cartItems.map((item) => item.GameID);
-      console.log('Game IDs for checkout:', gameIDs);
+
       const response = await fetch('http://localhost:5000/api/purchase', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userID: userId ,gameIDs}),
+        body: JSON.stringify({ userID: userId, gameIDs }),
       });
 
       if (!response.ok) {
@@ -990,11 +994,13 @@ function Cart() {
 
       // Clear the cart after successful checkout
       setCartItems([]);
+      alert('Purchase successful!');
     } catch (error) {
       console.error('Error during checkout:', error);
       alert('Failed to process checkout. Please try again.');
     }
   };
+
   if (loading) {
     return <div>Loading your cart...</div>; // Show loading indicator while fetching data
   }
@@ -1002,6 +1008,8 @@ function Cart() {
   if (error) {
     return <div>Error: {error}</div>; // Show error message if fetching fails
   }
+
+  const totalPrice = cartItems.reduce((total, item) => total + item.Total_Price, 0).toFixed(2);
 
   return (
     <div
@@ -1015,189 +1023,159 @@ function Cart() {
         padding: '20px',
       }}
     >
-      
-
-      {/* Slip Section */}
-      <div
-      
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background
-        borderRadius: '10px', // Rounded corners
-        padding: '0px 10px', // Add padding to create space inside the strip
-        maxWidth: '1600px', // Limit the width of the slip
-        margin: '10 auto 50px', // Center the slip and reduce spacing below
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)', // Subtle shadow for the slip
-      }}
+      {/* Header Bar */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+          borderRadius: '5px',
+          marginBottom: '20px',
+        }}
       >
-        {/* Cart Title */}
-  <div
-     style={{
-      textAlign: 'center', // Center the text horizontally
-      fontSize: '18px', // Slightly smaller font size
-      fontWeight: 'bold', // Make the text bold
-      color: 'white', // Text color
-      marginBottom: '0px', // Add spacing below the text
-    }}
-  >
-    Cart
-  </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Library Button */}
-          <button
-            onClick={() => navigate('/library')}
-            style={{
-              cursor: 'pointer',
-              background: 'transparent', // Make background transparent
-              border: 'none', // Remove border
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s ease',
-              color: 'white', // Set the default color for the button
-              fontSize: '16px',
-            }}
-            onMouseOver={(e) => {
-              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-            if (icon) {
-              icon.style.color = '#007bff';
-            }
-            }}
-            onMouseOut={(e) => {
-              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-              if (icon) {
-                icon.style.color = 'white'; // Reset icon color
-              }
-            }}
-          >
-            <i className="fa-solid fa-book" style={{ fontSize: '24px', marginRight: '10px' , visibility:"visible" }}></i>
-            Go to Library
-          </button>
-
+        {/* Left Section: Homepage and Library Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Homepage Button */}
           <button
-            onClick={() => navigate('/homepage')}
             style={{
               cursor: 'pointer',
-              background: 'transparent', // Make background transparent
-              border: 'none', // Remove border
+              background: 'transparent',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.3s ease',
-              color: 'white', // Set the default color for the button
-              fontSize: '16px',
+              color: 'white',
+              width: '50px',
+              height: '50px',
             }}
-            onMouseOver={(e) => {
-              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-              if (icon) {
-                icon.style.color = '#28a745'; // Change icon color to green on hover
-              }
-            }}
-            onMouseOut={(e) => {
-              const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-              if (icon) {
-                icon.style.color = 'white'; // Reset icon color to white
-              }
-            }}
+            onMouseOver={(e) => (e.target.style.color = '#28a745')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => navigate('/homepage')}
           >
-            <i className="fa-solid fa-home" style={{ fontSize: '24px', marginRight: '10px' }}></i>
-            Go to Homepage
+            <i className="fa fa-home" style={{ fontSize: '24px', color: 'inherit' }}></i>
+          </button>
+
+          {/* Library Button */}
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              color: 'white',
+              width: '50px',
+              height: '50px',
+            }}
+            onMouseOver={(e) => (e.target.style.color = '#007bff')}
+            onMouseOut={(e) => (e.target.style.color = 'white')}
+            onClick={() => navigate('/library')}
+          >
+            <i className="fa fa-book" style={{ fontSize: '24px', color: 'inherit' }}></i>
           </button>
         </div>
-      </div>
-      
-      {cartItems.length > 0 ? (
-        <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Responsive grid layout
-          gap: '20px', // Space between grid items
-          justifyContent: 'start', // Center the items horizontally
-          alignItems: 'start', // Align items at the top
-          maxWidth: '1200px', // Maximum width for the grid
-          padding: '20px',
-          margin: '0 auto', // Center the grid container on the page
 
-        }}
-        >
-          {cartItems.map((item) => (
-            <div
-              key={item.GameID}
-              style={{
-                border: '1px solid #ddd', // Softer border color
-                borderRadius: '0px', // Slightly more rounded corners
-                padding: '5px', // Increased padding for better spacing
-                textAlign: 'center',
-                backgroundColor: 'black', // Light grey background for a cleaner look
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Subtle shadow for a card effect
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                maxWidth: '300px', // Prevent the card from stretching too wide
-                //margin: '0 auto',  // Smooth hover effect
-                cursor: 'pointer',
-              }}
-              onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
-              onMouseOver={(e) => {
-                e.currentTarget.style.boxShadow = '10px 10px 10px rgba(0, 0, 0, 0.8)'; // Enhanced shadow on hover
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Reset shadow
-              }}
-            >
-              <img
-                src={`/images/${item.Game_Poster}`} // Fetch image from /public/images folder
-                alt={item.Game_Title}
-                style={{
-                  width: '100%',
-                  height: '350px',
-                  objectFit: 'cover',
-                  borderRadius: '0px',
-                }}
-              />
-              <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
-    <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
-    <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
-    <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
-    <button
-      onClick={(e) => {
-        e.stopPropagation(); // Prevent the parent card's onClick from being triggered
-        handleRemoveGame(item.GameID); // Perform the remove functionality
-      }}
-      style={{
-        marginTop: '10px',
-        padding: '10px 15px',
-        fontSize: '14px',
-        backgroundColor: 'red',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        transition: 'box-shadow 0.3s ease, transform 0.3s ease', // Smooth transition for hover effect
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.boxShadow = '0 0 10px 2px rgba(120, 0, 0, 0.8)'; // Red glow effect
-        e.currentTarget.style.transform = 'scale(1.02)'; // Slight zoom effect
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
-        e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
-      }}
-    >
-      Remove
-    </button>
-                {/* Game Card Content */}
-            </div>
-          ))}
+        {/* Centered Title */}
+        <h1 style={{ margin: 0, flex: 1, textAlign: 'center', color: 'white' }}>Cart</h1>
+
+        {/* Right Section: Total Price and Purchase Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Total Price */}
+          <div
+            style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: 'white',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: '10px 15px',
+              borderRadius: '5px',
+            }}
+          >
+            Total: ${totalPrice}
+          </div>
+
+          {/* Purchase Button */}
+          <button
+            onClick={handleCheckout}
+            style={{
+              padding: '10px 20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: 'green',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.color = 'green';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'green';
+              e.target.style.color = 'white';
+            }}
+          >
+            Purchase
+          </button>
         </div>
-      ) : (
-        <p style={{ textAlign: 'center', fontSize: '18px', color: '#fff' }}>Your cart is empty.</p>
-      )}
-      <div style={{ textAlign: 'center', marginTop: '30px' }}>
+      </header>
+
+      {/* Cart Items */}
+      {cartItems.length > 0 ? (
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Responsive grid layout
+      gap: '20px', // Space between grid items
+      justifyContent: 'start', // Align items to the start
+      alignItems: 'start', // Align items at the top
+      maxWidth: '1200px', // Maximum width for the grid
+      padding: '20px',
+      margin: '0 auto', // Center the grid container on the page
+    }}
+  >
+    {cartItems.map((item) => (
+      <div
+        key={item.GameID}
+        style={{
+          position: 'relative', // Enable absolute positioning for child elements
+          border: '1px solid #ddd', // Softer border color
+          borderRadius: '10px', // Rounded corners
+          padding: '5px',
+          textAlign: 'center',
+          backgroundColor: 'black', // Black background for a cleaner look
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Subtle shadow for a card effect
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          maxWidth: '300px', // Prevent the card from stretching too wide
+          cursor: 'pointer',
+        }}
+        onClick={() => navigate(`/game/${item.GameID}`, { state: { from: 'cart' } })}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '10px 10px 10px rgba(0, 0, 0, 0.8)'; // Enhanced shadow on hover
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Reset shadow
+        }}
+      >
+        {/* Remove Button */}
         <button
-          onClick={handleCheckout} // Checkout functionality
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent the parent card's onClick from being triggered
+            handleRemoveGame(item.GameID); // Perform the remove functionality
+          }}
           style={{
-            padding: '15px 30px',
-            fontSize: '16px',
-            backgroundColor: 'green',
+            position: 'absolute', // Position the button absolutely
+            top: '10px', // Top-right corner
+            right: '10px',
+            padding: '5px 10px',
+            fontSize: '14px',
+            backgroundColor: 'red',
             color: 'white',
             border: 'none',
             borderRadius: '5px',
@@ -1205,7 +1183,7 @@ function Cart() {
             transition: 'box-shadow 0.3s ease, transform 0.3s ease', // Smooth transition for hover effect
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 10px 2px rgba(0, 0, 0, 0.8)'; // Green glow effect
+            e.currentTarget.style.boxShadow = '0 0 10px 2px rgba(120, 0, 0, 0.8)'; // Red glow effect
             e.currentTarget.style.transform = 'scale(1.02)'; // Slight zoom effect
           }}
           onMouseOut={(e) => {
@@ -1213,9 +1191,48 @@ function Cart() {
             e.currentTarget.style.transform = 'scale(1)'; // Reset zoom
           }}
         >
-          Purchase
+          X
         </button>
+
+        {/* Game Poster */}
+        <img
+          src={`/images/${item.Game_Poster}`} // Fetch image from /public/images folder
+          alt={item.Game_Title}
+          style={{
+            width: '100%',
+            height: '350px',
+            objectFit: 'cover',
+            borderRadius: '10px',
+          }}
+        />
+        <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
+        <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
+        <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
+        <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
       </div>
+    ))}
+  </div>
+) : (
+  <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            color: 'black',
+            padding: '20px',
+            borderRadius: '10px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+          }}
+        >
+          Your cart is empty.
+        </div>
+)}
     </div>
   );
 }
@@ -1809,7 +1826,9 @@ function Library() {
             }}
             onMouseOver={(e) => (e.target.style.color = 'orange')}
             onMouseOut={(e) => (e.target.style.color = 'white')}
-            onClick={() => console.log('Cart button clicked')}
+            onClick={() => {
+              navigate('/cart');
+            }}
           >
             <i className="fa fa-shopping-cart" style={{ fontSize: '24px', color: 'inherit' }}></i>
           </button>
@@ -1891,9 +1910,13 @@ function Library() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-            marginTop: '20px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', // Responsive grid layout
+            gap: '20px', // Space between grid items
+            justifyContent: 'start', // Align items to the start
+            alignItems: 'start', // Align items at the top
+            maxWidth: '1200px', // Maximum width for the grid
+            padding: '20px',
+            margin: '0 auto', // Center the grid container on the page
           }}
         >
           {games.map((game) => (
