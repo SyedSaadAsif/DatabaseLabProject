@@ -261,12 +261,11 @@ GO
 CREATE PROCEDURE AddReview
     @UserID INT,
     @GameID INT,
-    @Comment VARCHAR(500),
-    @CommentDate DATE
+    @Comment VARCHAR(500)
 AS
 BEGIN
     INSERT INTO Reviews (user_ID, game_ID, Comment, Comment_date)
-    VALUES (@UserID, @GameID, @Comment, @CommentDate);
+    VALUES (@UserID, @GameID, @Comment, GETDATE());
 END;
 go
 
@@ -412,22 +411,21 @@ GO
 go
 -- procedure to remove a review
 CREATE PROCEDURE RemoveReview
-    @User_ID INT,
-    @Game_ID INT
+    @Review_ID INT
 AS
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Reviews WHERE user_ID = @User_ID AND game_ID = @Game_ID)
+    IF NOT EXISTS (SELECT 1 FROM Reviews WHERE Review_ID = @Review_ID)
     BEGIN
-        select 'No review found for the specified game by the user.' as message;
+        SELECT 'No review found with the specified Review_ID.' AS message;
         RETURN;
     END
 
     DELETE FROM Reviews
-    WHERE user_ID = @User_ID AND game_ID = @Game_ID;
+    WHERE Review_ID = @Review_ID;
 
-    select 'Review removed successfully.' as message;
+    SELECT 'Review removed successfully.' AS message;
 END;
-go
+GO
 -- View to view all games
 CREATE VIEW View_All_Games AS 
 SELECT Game_ID, Title, [Description], Game_poster, rating, publisher_id, Price, release_date, discount
@@ -443,6 +441,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT 
+        r.user_ID,
         r.Review_ID,
         r.Comment,
         r.likes,
@@ -653,7 +652,7 @@ EXEC RemoveGameFromCart @User_ID = 1, @Game_ID = 10;
 EXEC ViewPurchaseHistory @User_ID = 1;
 
 -- test procedure to remove a review
-EXEC RemoveReview @User_ID = 1, @Game_ID = 1;
+EXEC RemoveReview @Review_ID = 1;
 
 -- test view to view all games
 select * from View_All_Games

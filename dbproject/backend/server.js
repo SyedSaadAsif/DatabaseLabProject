@@ -181,15 +181,14 @@ app.get('/api/game/:gameID', async (req, res) => {
 
 // Add Review API
 app.post('/api/review', async (req, res) => {
-    const { userID, gameID, comment, commentDate } = req.body;
+    const { userID, gameID, comment } = req.body; // Removed commentDate
     try {
         const pool = await poolPromise;
         await pool.request()
-            .input('UserID', userID)
-            .input('GameID', gameID)
-            .input('Comment', comment)
-            .input('CommentDate', commentDate)
-            .execute('AddReview');
+            .input('UserID', sql.Int, userID)
+            .input('GameID', sql.Int, gameID)
+            .input('Comment', sql.VarChar, comment) // Pass only the required parameters
+            .execute('AddReview'); // Call the updated stored procedure
         res.status(201).json({ message: 'Review added successfully' });
     } catch (err) {
         console.error('Error adding review:', err);
@@ -322,23 +321,24 @@ app.get('/api/user/profile/:userID', async (req, res) => {
 
 // Remove Review
 app.delete('/api/review', async (req, res) => {
-    const { userID, gameID } = req.body;
+  const { reviewID } = req.body; // Accept Review_ID from the request body
 
-    try {
-        const pool = await poolPromise; 
-        const result = await pool.request()
-            .input('User_ID', sql.Int, userID)
-            .input('Game_ID', sql.Int, gameID)
-            .execute('RemoveReview');
+  if (!reviewID) {
+    return res.status(400).json({ error: 'Review ID is required' });
+  }
 
-        
-        const message = result.recordset.length > 0 ? result.recordset[0].message : 'No message returned';
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('Review_ID', sql.Int, reviewID) // Use Review_ID as input
+      .execute('RemoveReview'); // Call the updated stored procedure
 
-        res.json({ message });
-    } catch (err) {
-        console.error('Error removing review:', err);
-        res.status(500).json({ error: 'Failed to remove review' });
-    }
+    const message = result.recordset.length > 0 ? result.recordset[0].message : 'Review deleted successfully';
+    res.json({ message });
+  } catch (err) {
+    console.error('Error removing review:', err);
+    res.status(500).json({ error: 'Failed to remove review' });
+  }
 });
 
 // Fetch All Games from View_All_Games
@@ -356,13 +356,15 @@ app.get('/api/games/all', async (req, res) => {
 app.get('/api/reviews/:gameID', async (req, res) => {
     const { gameID } = req.params;
     const { userID } = req.query; // Get userID from query parameters
+
     try {
         const pool = await poolPromise;
         const result = await pool.request()
             .input('GameID', sql.Int, gameID)
             .input('UserID', sql.Int, userID) // Pass userID to the procedure
             .execute('GetGameReviews'); // Call the updated procedure
-        res.json(result.recordset);
+
+        res.json(result.recordset); // Return the reviews
     } catch (err) {
         console.error('Error fetching reviews:', err);
         res.status(500).json({ error: 'Failed to fetch reviews' });

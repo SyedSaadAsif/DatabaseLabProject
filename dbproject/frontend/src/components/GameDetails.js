@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import './GameDetails.css'; // Import the CSS file for styling
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function GameDetails() {
   const { gameID } = useParams();
@@ -38,7 +39,9 @@ function GameDetails() {
         const response = await fetch(`http://localhost:5000/api/reviews/${gameID}?userID=${userId}`);
         if (response.ok) {
             const data = await response.json();
-            setReviews(data); // Set reviews with the `liked` status
+            setReviews(data); // Set reviews with the `liked` and `user_ID` status
+        } else {
+            throw new Error('Failed to fetch reviews');
         }
       } catch (err) {
         console.error('Failed to fetch reviews:', err);
@@ -150,22 +153,43 @@ function GameDetails() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5000/api/review/add', {
+      const response = await fetch('http://localhost:5000/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userID: userId, gameID, comment: newReview }),
+        body: JSON.stringify({ userID: userId, gameID, comment: newReview }), // Send only required fields
       });
       if (!response.ok) {
         throw new Error('Failed to add review');
       }
-      alert('Review added successfully!');
       setNewReview(''); // Clear the text field
       setShowReviewField(false); // Hide the text field
-      // Optionally, refresh the reviews list
-      const updatedReviews = await response.json();
-      setReviews((prevReviews) => [...prevReviews, updatedReviews]);
+
+      // Refresh the reviews list
+      const updatedReviews = await fetch(`http://localhost:5000/api/reviews/${gameID}?userID=${userId}`);
+      if (updatedReviews.ok) {
+        const reviewsData = await updatedReviews.json();
+        setReviews(reviewsData); // Update the reviews state
+      }
     } catch (err) {
       alert(err.message || 'Failed to add review');
+    }
+  };
+
+  const handleDeleteReview = async (reviewID) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/review', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewID }), // Pass the Review_ID
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete review');
+      }
+      // Refresh the reviews list
+      setReviews((prevReviews) => prevReviews.filter((review) => review.Review_ID !== reviewID));
+    } catch (err) {
+      alert(err.message || 'Failed to delete review');
     }
   };
 
@@ -364,7 +388,33 @@ function GameDetails() {
               >
                 Play Now
               </button>
+            ) : location.state?.from === 'cart' ? (
+              // Show only "Buy Now" if opened from the cart page
+              <button
+                onClick={handleBuyNow}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  backgroundColor: 'orange',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.color = 'orange';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.backgroundColor = 'orange';
+                  e.target.style.color = 'white';
+                }}
+              >
+                Buy Now
+              </button>
             ) : (
+              // Show both "Add to Cart" and "Buy Now" if not opened from the cart page
               <>
                 <button
                   onClick={handleAddToCart}
@@ -438,29 +488,28 @@ function GameDetails() {
   <h3 style={{ fontSize: '1.8rem', margin: 0 }}>Reviews</h3>
   {hasGame && (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    {showReviewField && (
-      <input
-        type="text"
-        value={newReview}
-        onChange={(e) => setNewReview(e.target.value)}
-        placeholder="Write your review..."
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            console.log('Review:', newReview); // Log the review to the console
-            setNewReview(''); // Clear the input field
-            setShowReviewField(false); // Close the input field
-          }
-        }}
-        style={{
-          padding: '10px 10px',
-          fontSize: '16px',
-          borderRadius: '5px',
-          border: '1px solid #ccc',
-          outline: 'none',
-          width: '500px',
-        }}
-      />
-    )}
+    {/* Review Input Field */}
+{showReviewField && (
+  <input
+    type="text"
+    value={newReview}
+    onChange={(e) => setNewReview(e.target.value)}
+    placeholder="Write your review..."
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') {
+        handleAddReview(); // Call the function to add the review
+      }
+    }}
+    style={{
+      padding: '10px 10px',
+      fontSize: '16px',
+      borderRadius: '5px',
+      border: '1px solid #ccc',
+      outline: 'none',
+      width: '500px',
+    }}
+  />
+)}
     <button
       onClick={() => {
         setShowReviewField((prev) => !prev); // Toggle the input field
@@ -498,60 +547,105 @@ function GameDetails() {
 </div>
 
         {reviews.length > 0 ? (
-          reviews.map((review) => (
-            <div
-              key={review.Review_ID}
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                padding: '10px',
-                borderRadius: '5px',
-                marginBottom: '10px',
-                position: 'relative',
-              }}
-            >
-              <p>
-                <strong>{review.username}</strong>: {review.Comment}
-              </p>
-              {/* Like Button */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '10px',
-                  right: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  backgroundColor: review.liked ? 'pink' : 'transparent',
-                  color: 'white',
-                  padding: '5px 10px',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                }}
-                onClick={() => handleToggleLikeReview(review.Review_ID, review.liked)}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'pink';
-                }}
-                onMouseOut={(e) => {
-                  if (!review.liked) e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <span style={{ fontSize: '1rem' }}>{review.likes}</span> {/* Like count */}
-                  <span style={{ fontSize: '1.5rem' }}>👍</span> {/* Thumbs-up emoji */}
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p>No reviews available.</p>
-        )}
+  reviews.map((review) => (
+    <div
+      key={review.Review_ID}
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: '10px',
+        borderRadius: '5px',
+        marginBottom: '10px',
+        position: 'relative',
+      }}
+    >
+      <p>
+        <strong>{review.username}</strong>: {review.Comment}
+      </p>
+      {/* Comment Date */}
+      <p
+        style={{
+          fontSize: '0.8rem',
+          color: 'rgba(255, 255, 255, 0.7)', // Slightly transparent white
+          marginTop: '5px',
+        }}
+      >
+        {new Date(review.Comment_date).toLocaleDateString()} {/* Format the date */}
+      </p>
+      {/* Like Button */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '10px',
+          right: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          backgroundColor: review.liked ? '#FF1493' : 'transparent',
+          color: 'white',
+          padding: '5px 10px',
+          borderRadius: '10px',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+        }}
+        onClick={() => handleToggleLikeReview(review.Review_ID, review.liked)}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = '#FF1493';
+        }}
+        onMouseOut={(e) => {
+          if (!review.liked) e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          <span style={{ fontSize: '1rem' }}>{review.likes}</span> {/* Like count */}
+          <span style={{ fontSize: '1.5rem' }}>👍</span> {/* Thumbs-up emoji */}
+        </div>
+      </div>
+      {/* Delete Button (only for the current user's reviews) */}
+      {review.user_ID === parseInt(userId) && (
+      <button
+        onClick={() => handleDeleteReview(review.Review_ID)}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          padding: '10px 10px',
+          fontSize: '14px',
+          backgroundColor: 'red',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+        }}
+        onMouseOver={(e) => {
+          e.target.style.backgroundColor = 'darkred';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.backgroundColor = 'red';
+        }}
+      >
+        <i
+          className="fa-solid fa-trash-can"
+          style={{
+            pointerEvents: 'none', // Ensures the icon doesn't block hover effects
+          }}
+        ></i>
+    </button>
+    )}
+    </div>
+  ))
+) : (
+  <p>No reviews available.</p>
+)}
       </div>
     </div>
   );
