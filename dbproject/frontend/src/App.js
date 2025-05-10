@@ -1679,8 +1679,7 @@ function Login() {
     Don't have an account? Sign up now!
   </p>
 </div>
-
-    </div>
+</div>
   );
 }
 function Signup() {

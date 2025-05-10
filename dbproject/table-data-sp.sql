@@ -586,7 +586,17 @@ INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_i
 ('The Last of Us Part II', 'A gripping narrative-driven survival game.', 'tlou2.jpg', 10, 8, 59.99, '2020-06-19', 5),
 ('Super Mario Odyssey', 'A colorful platformer featuring Mario’s globe-trotting adventure.', 'mario_odyssey.jpg', 10, 9, 49.99, '2017-10-27', 10);
 
-
+INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_id, Price, release_date, discount) VALUES
+('Starfield', 'Explore the galaxy in Bethesda’s new open-world space RPG.', 'starfield.jpg', 8, 4, 69.99, '2023-09-06', 10),
+('Death Stranding', 'A mysterious and atmospheric journey across a fractured world.', 'death_stranding.jpg', 8, 11, 49.99, '2019-11-08', 30),
+('Resident Evil Village', 'Face gothic horror in the latest installment of the Resident Evil saga.', 're_village.jpg', 9, 1, 59.99, '2021-05-07', 25),
+('Ghost of Tsushima', 'An open-world samurai action game set during the Mongol invasion.', 'ghost_tsushima.jpg', 10, 2, 59.99, '2020-07-17', 20),
+('Returnal', 'A sci-fi third-person shooter with roguelike elements.', 'returnal.jpg', 8, 2, 69.99, '2021-04-30', 15),
+('It Takes Two', 'A unique co-op adventure about love and teamwork.', 'it_takes_two.jpg', 9, 11, 39.99, '2021-03-26', 20),
+('Baldur''s Gate 3', 'A deep fantasy RPG based on Dungeons & Dragons.', 'bg3.jpg', 10, 10, 59.99, '2023-08-03', 10),
+('Metroid Dread', 'Samus Aran returns in a high-speed 2D platformer.', 'metroid_dread.jpg', 9, 3, 59.99, '2021-10-08', 10),
+('Splatoon 3', 'Team up in colorful, fast-paced online ink battles.', 'splatoon3.jpg', 8, 3, 59.99, '2022-09-09', 5),
+('Alan Wake II', 'A psychological horror sequel with mind-bending storytelling.', 'alan_wake_2.jpg', 9, 5, 59.99, '2023-10-27', 10);
 
 -- Inserting Reviews
 INSERT INTO Reviews (user_ID, game_ID, Comment, Comment_date, likes) VALUES
