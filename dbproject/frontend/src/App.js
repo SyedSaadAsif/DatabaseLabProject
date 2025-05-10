@@ -912,8 +912,40 @@ function Cart() {
   const [error, setError] = useState(null); // State to handle errors
   const [showNotification, setShowNotification] = useState(false); // Updated state
   const navigate = useNavigate();
+  const [walletBalance, setWalletBalance] = useState(0); // State to store wallet balance
 
+  const fetchWalletBalance = async () => {
+    try {
+      const userId = localStorage.getItem('userId'); // Get the current user's ID from localStorage
+      if (!userId) {
+        throw new Error('User not logged in');
+      }
+  
+      const response = await fetch(`http://localhost:5000/api/getwallet?userId=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch wallet balance');
+      }
+  
+      const data = await response.json();
+      setWalletBalance(data.walletBalance); // Update the wallet balance state
+    } catch (err) {
+      console.error('Error fetching wallet balance:', err);
+      setShowNotification({ message: 'Failed to fetch wallet balance', type: 'error' });
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+    }
+  };
+
+// Call fetchWalletBalance when the component loads
   useEffect(() => {
+    fetchWalletBalance();
     const fetchCartItems = async () => {
       try {
         const userId = localStorage.getItem('userId'); // Get the current user's ID from localStorage
@@ -984,7 +1016,11 @@ function Cart() {
       }
       const gameIDs = cartItems.map((item) => item.GameID);
       const empty = gameIDs.length;
+      console.log('Total:' ,totalPrice);
+      console.log('Wallet Balance:', walletBalance);
       console.log('Game IDs:', gameIDs.length); // Log the game IDs for debugging
+      if(walletBalance.wallet >= totalPrice)
+      {
       const response = await fetch('http://localhost:5000/api/purchase', {
         method: 'POST',
         headers: {
@@ -994,6 +1030,7 @@ function Cart() {
       });
       const errorData = await response.json();
       console.log('Error data:', errorData.messages); // Log the error data for debugging
+   
       if(empty === 0)
       {
         setShowNotification({ message: 'Cart is Empty! Please Add a Game', type: 'error' });
@@ -1009,12 +1046,20 @@ function Cart() {
       }
       else{
       // Clear the cart after successful checkout
-      setCartItems([]);
+      setCartItems([]); // Clear the cart items
       setShowNotification({ message: 'Purchase Successfull!', type: 'success' });
       setTimeout(() => {
         setShowNotification(false);
       }, 3000);
     }
+  }
+  else
+  {
+    setShowNotification({ message: 'Insufficient funds in wallet!', type: 'error' });
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 3000);
+  }
     }
     catch (error) {
       setShowNotification({ message: 'Purchase Unuccessfull!', type: 'error' });
@@ -1035,7 +1080,9 @@ function Cart() {
   const totalPrice = cartItems.reduce((total, item) => total + item.Total_Price, 0).toFixed(2);
 
   return (
+    
     <div
+    
       style={{
         minHeight: '100vh', // Full viewport height
         backgroundImage: 'url(/background.jpg)', // Path to the image in the /public/images folder
@@ -1282,6 +1329,7 @@ function Cart() {
         </div>
 )}
     </div>
+    
   );
 }
 function Login() {
@@ -1530,7 +1578,7 @@ function Login() {
           e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
           e.currentTarget.style.transform = 'scale(1)'; // Reset button size
         }}
-        onClick={() => navigate('/signup')}      >
+        onClick={() => navigate('/signup')}>
         Sign Up
       </button>
       </form>

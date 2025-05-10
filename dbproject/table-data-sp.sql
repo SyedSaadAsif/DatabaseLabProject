@@ -331,8 +331,20 @@ BEGIN
        PRINT 'Error: Amount to add must be greater than zero.';
     END
 END;
+drop procedure GetWalletBalance
+CREATE PROCEDURE GetWalletBalance
+    @UserID INT -- Input parameter for the user ID
+AS
+BEGIN
+    -- Retrieve the wallet balance for the specified user
+    SELECT wallet
+    FROM [User]
+    WHERE User_ID = @UserID;
+END;
+GO
+	
 go
-exec AddFundsToWallet 10,50
+exec GetWalletBalance 10
 -- procedure to remove game from cart
 CREATE PROCEDURE RemoveGameFromCart
     @User_ID INT,

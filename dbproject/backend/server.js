@@ -105,7 +105,29 @@ app.get('/api/search', async (req, res) => {
         res.status(500).json({ error: 'Failed to search games' });
     }
 });
+app.get('/api/getwallet', async (req, res) => {
+    const { userId } = req.query; // Get the user ID from the query parameters
 
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' }); // Validate input
+    }
+
+    try {
+        const pool = await poolPromise; // Get the database connection pool
+        const result = await pool.request()
+            .input('UserID', sql.Int, userId) // Pass the user ID as a parameter to the procedure
+            .execute('GetWalletBalance'); // Execute the stored procedure
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ error: 'User not found' }); // Handle case where user is not found
+        }
+        // Return the wallet balance
+        res.status(200).json({ walletBalance: result.recordset[0] });
+    } catch (err) {
+        console.error('Error fetching wallet balance:', err);
+        res.status(500).json({ error: 'Failed to fetch wallet balance' }); // Handle server errors
+    }
+});
 // Purchase API
 app.post('/api/purchase', async (req, res) => {
     const { userID, gameIDs } = req.body;
@@ -129,7 +151,6 @@ app.post('/api/purchase', async (req, res) => {
         res.status(500).json({ error: 'Failed to purchase game' });
     }
 });
-
 // Add to Cart API
 app.post('/api/cart/add', async (req, res) => {
     const { userID, gameID } = req.body;
