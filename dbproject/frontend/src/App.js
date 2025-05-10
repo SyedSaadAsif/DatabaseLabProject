@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import GameDetails from './components/GameDetails'; // Import the GameDetails component
 import '@fortawesome/fontawesome-free/css/all.min.css';
-
 function Homepage() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
@@ -911,6 +910,7 @@ function Cart() {
   const [cartItems, setCartItems] = useState([]); // State to store cart items
   const [loading, setLoading] = useState(true); // State to show loading indicator
   const [error, setError] = useState(null); // State to handle errors
+  const [showNotification, setShowNotification] = useState(false); // Updated state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -966,6 +966,10 @@ function Cart() {
 
       // Update the cart items after removal
       setCartItems((prevItems) => prevItems.filter((item) => item.GameID !== GameID));
+      setShowNotification({ message: 'Game removed successfully!', type: 'success' });
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
     } catch (error) {
       console.error('Error removing game from cart:', error);
       alert('Failed to remove game from cart. Please try again.');
@@ -979,7 +983,8 @@ function Cart() {
         throw new Error('User not logged in');
       }
       const gameIDs = cartItems.map((item) => item.GameID);
-
+      const empty = gameIDs.length;
+      console.log('Game IDs:', gameIDs.length); // Log the game IDs for debugging
       const response = await fetch('http://localhost:5000/api/purchase', {
         method: 'POST',
         headers: {
@@ -987,18 +992,36 @@ function Cart() {
         },
         body: JSON.stringify({ userID: userId, gameIDs }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to process checkout');
+      const errorData = await response.json();
+      console.log('Error data:', errorData.messages); // Log the error data for debugging
+      if(empty === 0)
+      {
+        setShowNotification({ message: 'Cart is Empty! Please Add a Game', type: 'error' });
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 3000);
       }
-
+      else if (errorData.messages == "Insufficient funds in wallet.") {
+        setShowNotification({ message: 'Insufficient funds in wallet!', type: 'error' });
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+      }
+      else{
       // Clear the cart after successful checkout
       setCartItems([]);
-      alert('Purchase successful!');
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      alert('Failed to process checkout. Please try again.');
+      setShowNotification({ message: 'Purchase Successfull!', type: 'success' });
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
     }
+    }
+    catch (error) {
+      setShowNotification({ message: 'Purchase Unuccessfull!', type: 'error' });
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+     }
   };
 
   if (loading) {
@@ -1035,6 +1058,31 @@ function Cart() {
           marginBottom: '20px',
         }}
       >
+      <div>
+      {/* Notification Box */}
+      {showNotification && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            backgroundColor: showNotification.type === 'success' ? '#28a745' : '#dc3545',
+            padding: '20px 20px',
+            borderRadius: '5px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            zIndex: 1000,
+            fontSize: '16px',
+            animation: "fadeInOut 3s ease-in-out",
+            
+          }}
+        >
+          {showNotification.message}
+        </div>
+      )}
+      </div>
+      {/* Header Bar */}
         {/* Left Section: Homepage and Library Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Homepage Button */}
