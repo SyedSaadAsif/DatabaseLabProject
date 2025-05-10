@@ -154,16 +154,24 @@ app.post('/api/purchase', async (req, res) => {
 // Add to Cart API
 app.post('/api/cart/add', async (req, res) => {
     const { userID, gameID } = req.body;
+
     try {
         const pool = await poolPromise;
         await pool.request()
-            .input('UserID', userID)
-            .input('GameID', gameID)
+            .input('UserID', sql.Int, userID)
+            .input('GameID', sql.Int, gameID)
             .execute('AddToCart');
+
+        // If no error, send success response
         res.status(200).json({ message: 'Game added to cart successfully' });
     } catch (err) {
-        console.error('Error adding to cart:', err);
-        res.status(500).json({ error: 'Failed to add to cart' });
+        // Check if the error is due to the game already being in the cart
+        if (err.message.includes('The game is already in the cart')) {
+            res.status(400).json({ error: 'The game is already in the cart.' });
+        } else {
+            console.error('Error adding to cart:', err);
+            res.status(500).json({ error: 'Failed to add to cart' });
+        }
     }
 });
 

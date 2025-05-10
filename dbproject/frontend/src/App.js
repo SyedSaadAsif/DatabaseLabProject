@@ -756,7 +756,7 @@ function Homepage() {
             key={game.Game_ID}
             style={{
               position: 'relative',
-              width: '100%',
+              width: '285px',
               height: '400px',
               borderRadius: '10px',
               overflow: 'hidden',
@@ -1018,9 +1018,6 @@ function Cart() {
       }
       const gameIDs = cartItems.map((item) => item.GameID);
       const empty = gameIDs.length;
-      console.log('Total:' ,totalPrice);
-      console.log('Wallet Balance:', walletBalance);
-      console.log('Game IDs:', gameIDs.length); // Log the game IDs for debugging
       if(walletBalance.wallet >= totalPrice)
       {
       const response = await fetch('http://localhost:5000/api/purchase', {
@@ -1079,7 +1076,12 @@ function Cart() {
     return <div>Error: {error}</div>; // Show error message if fetching fails
   }
 
-  const totalPrice = cartItems.reduce((total, item) => total + item.Total_Price, 0).toFixed(2);
+  const totalPrice = cartItems.reduce((total, item) => {
+    const discountedPrice = item.discount > 0 
+      ? item.Game_Price * (1 - item.discount / 100) 
+      : item.Game_Price;
+    return total + discountedPrice;
+  }, 0).toFixed(2);
 
   return (
     
@@ -1303,9 +1305,12 @@ function Cart() {
           }}
         />
         <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
-        <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>Price: ${item.Game_Price}</p>
-        <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Quantity: {item.Quantity}</p>
-        <p style={{ margin: '5px 0', fontSize: '16px', color: 'White' }}>Total: ${item.Total_Price}</p>
+        <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>
+                Price: $
+                {item.discount > 0
+                  ? (item.Game_Price * (1 - item.discount / 100)).toFixed(2)
+                  : item.Game_Price.toFixed(2)}
+              </p>
       </div>
     ))}
   </div>
@@ -1386,7 +1391,7 @@ function Login() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'left',
+        textAlign: 'centre',
         minHeight: '94.5vh',
         backgroundImage: 'url("/loginpage.jpg")',
         backgroundSize: 'cover',
@@ -1403,276 +1408,262 @@ function Login() {
           {showNotification.message}
         </div>
       )}
-      <h1
-        style={{
-          position: 'absolute',
-          top: '55px',
-          left: '620px',
-          fontSize: '34px',
-          fontWeight: 'bold',
-        }}
-      >
-        Welcome to GameStrife
-      </h1>
-      <h2
-        style={{
-          position: 'absolute',
-          top: '134px',
-          fontSize: '26px',
-          fontWeight: 'bold',
-          color: 'rgb(25, 153, 255)',
-          position: 'absolute',
-          left: '852px',
-        }}
-      >
-        Or Scan With QR Code
-      </h2>
-
-      {/* QR Code Section */}
       <div
-        style={{
-          position: 'absolute',
-          top: '220px',
-          left: '851px',
-          width: '275px',
-          height: '275px',
-          backgroundColor: 'white',
-          borderRadius: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-        }}
-      >
-        <img
-          src="/qrcode.jpg"
-          alt="QR Code"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            borderRadius: '10px',
-          }}
-        />
-      </div>
+  style={{
+    display: 'flex', // Flexbox for centering
+    justifyContent: 'center', // Center horizontally
+    alignItems: 'center', // Center vertically
+    position: 'absolute', // Absolute positioning
+    top: '50%', // Center vertically relative to the viewport
+    left: '50%', // Center horizontally relative to the viewport
+    transform: 'translate(-50%, -50%)', // Adjust for the element's size
+    backgroundColor: 'rgba(0, 0, 0, 0)', // Transparent background
+    color: 'white',
+    padding: '300px 700px', // Adjust padding as needed
+    borderRadius: '5px',
+  }}
+>
+  <h1
+    style={{
+      position: 'absolute',
+      top: '20px',
+      left: '530px',
+      fontSize: '34px',
+      fontWeight: 'bold',
+    }}
+  >
+    Welcome to GameStrife
+  </h1>
+  <h2
+    style={{
+      position: 'absolute',
+      top: '124px',
+      fontSize: '26px',
+      fontWeight: 'bold',
+      color: 'rgb(25, 153, 255)',
+      left: '782px',
+    }}
+  >
+    Or Scan With QR Code
+  </h2>
 
-      <p
-        style={{
-          position: 'absolute',
-          top: '500px',
-          transform: 'translate(0, 0)',
-          fontSize: '18px',
-          color: 'grey',
-          textAlign: 'center',
-          textDecoration: 'underline',
-          position: 'absolute',
-          left: '830px',
-        }}
-      >
-        Use the mobile app to scan the QR code
-      </p>
+  {/* QR Code Section */}
+  <div
+    style={{
+      position: 'absolute',
+      top: '200px',
+      left: '781px',
+      width: '275px',
+      height: '275px',
+      backgroundColor: 'white',
+      borderRadius: '10px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+    }}
+  >
+    <img
+      src="/qrcode.jpg"
+      alt="QR Code"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        borderRadius: '10px',
+      }}
+    />
+  </div>
 
-      <h3
+  <p
+    style={{
+      position: 'absolute',
+      top: '480px',
+      transform: 'translate(0, 0)',
+      fontSize: '18px',
+      color: 'grey',
+      textAlign: 'center',
+      textDecoration: 'underline',
+      left: '760px',
+    }}
+  >
+    Use the mobile app to scan the QR code
+  </p>
+
+  <h3
+    style={{
+      position: 'absolute',
+      top: '120px',
+      left: '380px', // Moved slightly to the left
+      fontSize: '26px',
+      fontWeight: 'bold',
+      color: 'rgb(25, 153, 255)',
+    }}
+  >
+    Log In
+  </h3>
+  <form
+    onSubmit={handleLogin}
+    style={{
+      position: 'absolute',
+      top: '220px',
+      left: '380px', // Moved slightly to the left
+      transform: 'translate(0, 0)',
+    }}
+  >
+    <div style={{ marginBottom: '15px' }}>
+      <label
         style={{
-          position: 'absolute',
-          top: '130px',
-          left: '450px', // Moved slightly to the left
-          fontSize: '26px',
+          display: 'block',
           fontWeight: 'bold',
-          color: 'rgb(25, 153, 255)',
+          marginBottom: '10px',
         }}
       >
-        Log In
-      </h3>
-      <form
-        onSubmit={handleLogin}
+        Sign In with Username
+      </label>
+      <input
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
         style={{
-          position: 'absolute',
-          top: '230px',
-          left: '450px', // Moved slightly to the left
-          transform: 'translate(0, 0)',
-        }}
-      >
-        <div style={{ marginBottom: '15px' }}>
-          <label
-            style={{
-              display: 'block',
-              fontWeight: 'bold',
-              marginBottom: '10px',
-            }}
-          >
-            Sign In with Username
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              width: '300px',
-              padding: '10px',
-              fontSize: '16px',
-              border: '1px solid #ccc',
-              borderRadius: '5px',
-            }}
-            required
-          />
-        </div>
-        <div style={{ position: 'relative', marginBottom: '15px' }}>
-          <label
-            style={{
-              display: 'block',
-              fontWeight: 'bold',
-              marginBottom: '5px',
-            }}
-          >
-            Password
-          </label>
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: '270px',
-              padding: '10px',
-              fontSize: '16px',
-              border: '1px solid #ccc',
-              borderRadius: '5px',
-              paddingRight: '40px',
-            }}
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: 'absolute',
-              right: '10px',
-              top: '72%',
-              transform: 'translateY(-50%)',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <i
-              className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
-              style={{ fontSize: '18px', color: 'black' }}
-            ></i>
-          </button>
-        </div>
-        <button
-          type="submit"
-          style={{
-            position: 'absolute',
-            top: '210px',
-            left: '10px',
-            transform: 'translate(0, 0)',
-            padding: '12px 40px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            backgroundColor: "rgb(25, 153, 255)",
-            color: 'White',
-            border: 'none',
-            borderRadius: '5px',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          Login
-        </button>
-        <button
-<<<<<<< Updated upstream
-        type="button"
-        style={{
-          position: 'absolute',
-          top: '210px', // y-coordinate for Sign Up button (below Login button)
-          left: '180px', // x-coordinate (aligned with Login button)
-          transform: 'translate(0, 0)',
-          padding: '12px 38px',
+          width: '300px',
+          padding: '10px',
           fontSize: '16px',
-          cursor: 'pointer',
-          backgroundColor:" rgb(25, 153, 255)",
-          color: 'white',
-          border: 'none',
-          whiteSpace: 'nowrap',
+          border: '1px solid #ccc',
           borderRadius: '5px',
         }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)'; // Add glow effect
-          e.currentTarget.style.transform = 'scale(1)'; // Slightly enlarge the button
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
-          e.currentTarget.style.transform = 'scale(1)'; // Reset button size
-        }}
-        onClick={() => navigate('/signup')}>
-        Sign Up
-      </button>
-=======
-          type="button"
-          style={{
-            position: 'absolute',
-            top: '210px',
-            left: '180px',
-            transform: 'translate(0, 0)',
-            padding: '12px 38px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            backgroundColor: "rgb(25, 153, 255)",
-            color: 'white',
-            border: 'none',
-            whiteSpace: 'nowrap',
-            borderRadius: '5px',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onClick={() => navigate('/signup')}
-        >
-          Sign Up
-        </button>
->>>>>>> Stashed changes
-      </form>
-      {loginMessage && (
-        <p
-          style={{
-            position: 'absolute',
-            top: '540px',
-            left: '800px',
-            transform: 'translate(0, 0)',
-            fontSize: '22px',
-            color: loginMessage.includes('successful') ? 'rgb(25, 153, 255)' : 'red',
-            textAlign: 'center',
-          }}
-        >
-          {loginMessage}
-        </p>
-      )}
-      <p
+        required
+      />
+    </div>
+    <div style={{ position: 'relative', marginBottom: '15px' }}>
+      <label
         style={{
-          position: 'absolute',
-          top: '500px',
-          left: '462px', // Moved slightly to the right
-          transform: 'translate(0, 0)',
-          fontSize: '18px',
-          color: 'grey',
-          textAlign: 'center',
-          textDecoration: 'underline',
+          display: 'block',
+          fontWeight: 'bold',
+          marginBottom: '5px',
         }}
       >
-        Don't have an account? Sign up now!
-      </p>
+        Password
+      </label>
+      <input
+        type={showPassword ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{
+          width: '270px',
+          padding: '10px',
+          fontSize: '16px',
+          border: '1px solid #ccc',
+          borderRadius: '5px',
+          paddingRight: '40px',
+        }}
+        required
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        style={{
+          position: 'absolute',
+          right: '10px',
+          top: '72%',
+          transform: 'translateY(-50%)',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        <i
+          className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+          style={{ fontSize: '18px', color: 'black' }}
+        ></i>
+      </button>
+    </div>
+    <button
+      type="submit"
+      style={{
+        position: 'absolute',
+        top: '200px',
+        left: '0px',
+        transform: 'translate(0, 0)',
+        padding: '12px 40px',
+        fontSize: '16px',
+        cursor: 'pointer',
+        backgroundColor: 'rgb(25, 153, 255)',
+        color: 'White',
+        border: 'none',
+        borderRadius: '5px',
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      Login
+    </button>
+    <button
+      type="button"
+      style={{
+        position: 'absolute',
+        top: '200px',
+        left: '190px',
+        transform: 'translate(0, 0)',
+        padding: '12px 38px',
+        fontSize: '16px',
+        cursor: 'pointer',
+        backgroundColor: 'rgb(25, 153, 255)',
+        color: 'white',
+        border: 'none',
+        whiteSpace: 'nowrap',
+        borderRadius: '5px',
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+      onClick={() => navigate('/signup')}
+    >
+      Sign Up
+    </button>
+  </form>
+  {loginMessage && (
+    <p
+      style={{
+        position: 'absolute',
+        top: '530px',
+        left: '730px',
+        transform: 'translate(0, 0)',
+        fontSize: '22px',
+        color: loginMessage.includes('successful') ? 'rgb(25, 153, 255)' : 'red',
+        textAlign: 'center',
+      }}
+    >
+      {loginMessage}
+    </p>
+  )}
+  <p
+    style={{
+      position: 'absolute',
+      top: '480px',
+      left: '392px', // Moved slightly to the right
+      transform: 'translate(0, 0)',
+      fontSize: '18px',
+      color: 'grey',
+      textAlign: 'center',
+      textDecoration: 'underline',
+    }}
+  >
+    Don't have an account? Sign up now!
+  </p>
+</div>
+
     </div>
   );
 }
@@ -2183,7 +2174,7 @@ function Library() {
               key={game.Game_ID}
               style={{
                 position: 'relative',
-                width: '100%',
+                width: '285px',
                 height: '400px',
                 borderRadius: '10px',
                 overflow: 'hidden',

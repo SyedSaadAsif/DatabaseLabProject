@@ -39,7 +39,6 @@ CREATE TABLE Reviews (
 CREATE TABLE Cart (
     UserID INT NOT NULL,
     GameID INT NOT NULL,
-    Game_Count INT DEFAULT 0,
     PRIMARY KEY (UserID, GameID), -- Composite Primary Key
     FOREIGN KEY (UserID) REFERENCES [User](User_ID),
     FOREIGN KEY (GameID) REFERENCES Game_Catalogue(Game_ID)
@@ -181,16 +180,18 @@ CREATE PROCEDURE AddToCart
     @GameID INT
 AS
 BEGIN
+    -- Check if the game is already in the cart
     IF EXISTS (SELECT 1 FROM Cart WHERE UserID = @UserID AND GameID = @GameID)
     BEGIN
-        UPDATE Cart
-        SET Game_Count = Game_Count + 1
-        WHERE UserID = @UserID AND GameID = @GameID;
+        -- Return an error message
+        RAISERROR ('The game is already in the cart.', 16, 1);
+        RETURN;
     END
     ELSE
     BEGIN
-        INSERT INTO Cart (UserID, GameID, Game_Count)
-        VALUES (@UserID, @GameID, 1);
+        -- Insert the game into the cart
+        INSERT INTO Cart (UserID, GameID)
+        VALUES (@UserID, @GameID);
     END
 END;
 GO
@@ -407,11 +408,10 @@ BEGIN
     -- Select the cart contents for the given user
     SELECT 
         c.GameID,
+		g.discount AS discount,
         g.Title AS Game_Title,
         g.Price AS Game_Price,
-        g.Game_poster AS Game_Poster, -- Include the poster URL
-        c.Game_Count AS Quantity,
-        (g.Price * c.Game_Count) AS Total_Price
+        g.Game_poster AS Game_Poster
     FROM 
         Cart c
     JOIN 

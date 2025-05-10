@@ -54,22 +54,26 @@ function GameDetails() {
 
   const handleAddToCart = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userID: userId, gameID }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setShowNotification({ message: 'Game added to cart successfully!', type: 'success' }); // Success notification
-      } else {
-        throw new Error(data.error || 'Failed to add game to cart');
-      }
+        const response = await fetch('http://localhost:5000/api/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userID: userId, gameID }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            // Show success notification
+            setShowNotification({ message: 'Game added to cart successfully!', type: 'success' });
+        } else {
+            // Show error notification if the game is already in the cart
+            setShowNotification({ message: data.error || 'Failed to add game to cart', type: 'error' });
+        }
     } catch (err) {
-      setShowNotification({ message: err.message || 'Failed to add game to cart', type: 'error' }); // Error notification
+        // Show error notification for any other errors
+        setShowNotification({ message: err.message || 'Failed to add game to cart', type: 'error' });
     } finally {
-      // Automatically hide the notification after 3 seconds
-      setTimeout(() => setShowNotification(false), 3000);
+        // Automatically hide the notification after 3 seconds
+        setTimeout(() => setShowNotification(false), 3000);
     }
 };
 
