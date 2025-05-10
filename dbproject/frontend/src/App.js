@@ -1405,7 +1405,7 @@ function Login() {
       )}
       <div
         style={{
-          position: 'absolute',
+          position: 'relative',
           top: '10%',
           left: '9%',
           backgroundColor: 'rgba(0, 0, 0, 0)',
