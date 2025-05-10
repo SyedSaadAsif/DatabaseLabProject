@@ -1324,6 +1324,10 @@ function Login() {
   return (
     <div
       style={{
+        display: 'flex', // Use Flexbox for centering
+        flexDirection: 'column', // Stack elements vertically
+        alignItems: 'center', // Center elements horizontally
+        justifyContent: 'center',
         textAlign: 'left',
         minHeight: '94.5vh', // Ensures the background covers the full viewport height
         backgroundImage: 'url("/loginpage.jpg")', // Replace with your image path
@@ -1338,19 +1342,73 @@ function Login() {
       <h1
         style={{
           position: 'absolute', // Allows precise positioning
-          top: '90px', // y-coordinate
-          left: '600px', // x-coordinate
+          top: '55px', // y-coordinate
+          left: '620px', // x-coordinate
           fontSize: '34px',
           fontWeight: 'bold',
         }}
       >
-        Welcome to, Kattuti
+        Welcome to GameStrife
       </h1>
+      <h2
+        style={{
+          position: 'absolute', // Allows precise positioning
+          top: '130px', // y-coordinate
+          left: '922px', // x-coordinate
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: 'rgb(25, 153, 255)', // Ensures text is visible on the background
+        }}
+      >
+        Or Scan With QR Code  
+
+      </h2>
+      <p
+        style={{
+         position: 'absolute', // Allows precise positioning
+         top: '500px', // Adjust y-coordinate to position below the loginMessage
+         left: '514px', // Adjust x-coordinate to align with the form
+        transform: 'translate(0, 0)', // Fine-tune the position
+        fontSize: '18px',
+         color: 'grey', // Set the color of the additional text
+         textAlign: 'center', // Centers the text horizontally
+         textDecoration: 'underline', // Makes the text bold
+        }}
+      >
+  Don't have an account? Sign up now!
+</p>
+<p
+        style={{
+         position: 'absolute', // Allows precise positioning
+         top: '490px', // Adjust y-coordinate to position below the loginMessage
+         left: '892px', // Adjust x-coordinate to align with the form
+        transform: 'translate(0, 0)', // Fine-tune the position
+        fontSize: '18px',
+         color: 'grey', // Set the color of the additional text
+         textAlign: 'center', // Centers the text horizontally
+         textDecoration: 'underline', // Makes the text bold
+        }}
+      >
+  Use the mobile app to scan the QR code
+</p>
+      <h3
+      style={{
+        position: 'absolute', // Allows precise positioning
+        top: '130px', // y-coordinate
+        left: '500px', // x-coordinate
+        fontSize: '26px',
+        fontWeight: 'bold',
+        color: 'rgb(25, 153, 255)', // Ensures text is visible on the background
+
+      }}
+    >
+      Log In
+      </h3>
       <form
         onSubmit={handleLogin}
         style={{
           position: 'absolute', // Allows precise positioning
-          top: '250px', // y-coordinate
+          top: '230px', // y-coordinate
           left: '500px', // x-coordinate
           transform: 'translate(0, 0)', // Fine-tune the position
         }}
@@ -1363,7 +1421,7 @@ function Login() {
               marginBottom: '10px',
             }}
           >
-            Username:
+            Sign In with Username
           </label>
           <input
             type="text"
@@ -1387,7 +1445,7 @@ function Login() {
               marginBottom: '5px',
             }}
           >
-            Password:
+            Password
           </label>
           <input
             type={showPassword ? "text" : "password"} // Toggle input type
@@ -1426,35 +1484,51 @@ function Login() {
           type="submit"
           style={{
             position: 'absolute', // Allows precise positioning
-            top: '220px', // y-coordinate
+            top: '210px', // y-coordinate
             left: '10px', // x-coordinate
             transform: 'translate(0, 0)', // Fine-tune the position
             padding: '12px 40px',
             fontSize: '16px',
             cursor: 'pointer',
-            backgroundColor: 'green',
+            backgroundColor:" rgb(25, 153, 255)",
             color: 'White',
             border: 'none',
             borderRadius: '5px',
           }}
-        >
+          onMouseOver={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)'; // Add glow effect
+            e.currentTarget.style.transform = 'scale(1)'; // Slightly enlarge the button
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
+            e.currentTarget.style.transform = 'scale(1)'; // Reset button size
+          }}
+        > 
           Login
         </button>
         <button
         type="button"
         style={{
           position: 'absolute',
-          top: '220px', // y-coordinate for Sign Up button (below Login button)
+          top: '210px', // y-coordinate for Sign Up button (below Login button)
           left: '180px', // x-coordinate (aligned with Login button)
           transform: 'translate(0, 0)',
           padding: '12px 38px',
           fontSize: '16px',
           cursor: 'pointer',
-          backgroundColor: 'green', // Different color for Sign Up button
+          backgroundColor:" rgb(25, 153, 255)",
           color: 'white',
           border: 'none',
           whiteSpace: 'nowrap',
           borderRadius: '5px',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)'; // Add glow effect
+          e.currentTarget.style.transform = 'scale(1)'; // Slightly enlarge the button
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
+          e.currentTarget.style.transform = 'scale(1)'; // Reset button size
         }}
         onClick={() => navigate('/signup')}      >
         Sign Up
@@ -1465,15 +1539,16 @@ function Login() {
     style={{
       position: 'absolute', // Allows precise positioning
       top: '540px', // Adjust y-coordinate to position below the buttons
-      left: '700px', // Adjust x-coordinate to align with the form
+      left: '800px', // Adjust x-coordinate to align with the form
       transform: 'translate(0, 0)', // Fine-tune the position
       fontSize: '22px',
-      color: loginMessage.includes('successful') ? 'green' : 'red',
+      color: loginMessage.includes('successful') ? 'rgb(25, 153, 255)' : 'red',
       textAlign: 'center', // Centers the text horizontally
     }}
   >
     {loginMessage}
   </p>
+  
 )}
     </div>
   );
