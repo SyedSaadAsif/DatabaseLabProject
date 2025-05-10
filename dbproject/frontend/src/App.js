@@ -4,6 +4,8 @@ import GameDetails from './components/GameDetails'; // Import the GameDetails co
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css'; // Import the new CSS file
 
+import './App.css'; // Import the new CSS file
+
 function Homepage() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
@@ -1369,16 +1371,27 @@ function Login() {
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
+        setShowNotification({ message: "Invalid username or password.", type: 'red' });
+        setTimeout(() => {
+          setShowNotification(null);
+        }, 3000);
       } else {
         localStorage.setItem('userId', data.userId); // Save user ID to local storage
+      setShowNotification({ message: 'Login successful!', type: 'blue' }); // Blue notification
+      setTimeout(() => {
+        setShowNotification(null);
       setShowNotification({ message: 'Login successful!', type: 'blue' }); // Blue notification
       setTimeout(() => {
         setShowNotification(null);
         navigate('/homepage'); // Navigate to the homepage
         setTimeout(() => window.location.reload(), 1000);
       }, 1000);
+        setTimeout(() => window.location.reload(), 1000);
+      }, 1000);
       }
     } catch (error) {
+      setShowNotification({ message: error.message || 'Login failed.', type: 'red' }); // Red notification
+      setTimeout(() => setShowNotification(null), 3000);
       setShowNotification({ message: error.message || 'Login failed.', type: 'red' }); // Red notification
       setTimeout(() => setShowNotification(null), 3000);
     }
@@ -1387,6 +1400,9 @@ function Login() {
   return (
     <div
       style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -1719,7 +1735,15 @@ function Signup() {
         navigate('/homepage'); // Navigate to the homepage
         setTimeout(() => window.location.reload(), 1000); // Reload the page after navigation
       }, 1000);
+      setShowNotification({ message: 'Signup successful!', type: 'blue' }); // Blue notification
+      setTimeout(() => {
+        setShowNotification(null);
+        navigate('/homepage'); // Navigate to the homepage
+        setTimeout(() => window.location.reload(), 1000); // Reload the page after navigation
+      }, 1000);
     } catch (error) {
+      setShowNotification({ message: error.message || 'Signup failed.', type: 'red' }); // Red notification
+      setTimeout(() => setShowNotification(null), 3000);
       setShowNotification({ message: error.message || 'Signup failed.', type: 'red' }); // Red notification
       setTimeout(() => setShowNotification(null), 3000);
     }
@@ -1744,6 +1768,12 @@ function Signup() {
         position: 'relative',
       }}
     >
+      {/* Notification */}
+      {showNotification && (
+        <div className={`notification ${showNotification.type}`}>
+          {showNotification.message}
+        </div>
+      )}
       {/* Notification */}
       {showNotification && (
         <div className={`notification ${showNotification.type}`}>
@@ -1891,6 +1921,8 @@ function Signup() {
           type="submit"
           style={{
             position: 'absolute',
+            top: '415px',
+            left: '-2px',
             top: '415px',
             left: '-2px',
             width: '106%',
