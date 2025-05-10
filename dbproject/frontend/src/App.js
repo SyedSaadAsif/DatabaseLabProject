@@ -1386,7 +1386,7 @@ function Login() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'left',
+        textAlign: 'centre',
         minHeight: '94.5vh',
         backgroundImage: 'url("/loginpage.jpg")',
         backgroundSize: 'cover',
@@ -1403,11 +1403,22 @@ function Login() {
           {showNotification.message}
         </div>
       )}
+      <div
+        style={{
+          position: 'absolute',
+          top: '10%',
+          left: '9%',
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          color: 'white',
+          padding: '400px 900px',
+          borderRadius: '5px',
+        }}
+>
       <h1
         style={{
           position: 'absolute',
-          top: '55px',
-          left: '620px',
+          top: '30px',
+          left: '600px',
           fontSize: '34px',
           fontWeight: 'bold',
         }}
@@ -1587,34 +1598,6 @@ function Login() {
           Login
         </button>
         <button
-<<<<<<< Updated upstream
-        type="button"
-        style={{
-          position: 'absolute',
-          top: '210px', // y-coordinate for Sign Up button (below Login button)
-          left: '180px', // x-coordinate (aligned with Login button)
-          transform: 'translate(0, 0)',
-          padding: '12px 38px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          backgroundColor:" rgb(25, 153, 255)",
-          color: 'white',
-          border: 'none',
-          whiteSpace: 'nowrap',
-          borderRadius: '5px',
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)'; // Add glow effect
-          e.currentTarget.style.transform = 'scale(1)'; // Slightly enlarge the button
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
-          e.currentTarget.style.transform = 'scale(1)'; // Reset button size
-        }}
-        onClick={() => navigate('/signup')}>
-        Sign Up
-      </button>
-=======
           type="button"
           style={{
             position: 'absolute',
@@ -1642,7 +1625,6 @@ function Login() {
         >
           Sign Up
         </button>
->>>>>>> Stashed changes
       </form>
       {loginMessage && (
         <p
@@ -1673,6 +1655,8 @@ function Login() {
       >
         Don't have an account? Sign up now!
       </p>
+    </div>
+
     </div>
   );
 }
