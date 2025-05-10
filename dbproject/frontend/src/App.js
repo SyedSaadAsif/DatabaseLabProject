@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import GameDetails from './components/GameDetails'; // Import the GameDetails component
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import './App.css'; // Import the new CSS file
+
 function Homepage() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
@@ -1337,6 +1339,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+  const [showNotification, setShowNotification] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -1356,42 +1359,55 @@ function Login() {
 
       const data = await response.json();
       if (data.userId === -1) {
-        setLoginMessage("Invalid username or password.");
         localStorage.removeItem('userId'); // Clear any previously stored userId
+        setShowNotification({ message: "Invalid username or password.", type: 'red' });
+        setTimeout(() => {
+          setShowNotification(null);
+        }, 3000);
       } else {
         localStorage.setItem('userId', data.userId); // Save user ID to local storage
-        setLoginMessage("Login successful!");
+      setShowNotification({ message: 'Login successful!', type: 'blue' }); // Blue notification
+      setTimeout(() => {
+        setShowNotification(null);
         navigate('/homepage'); // Navigate to the homepage
+        setTimeout(() => window.location.reload(), 1000);
+      }, 1000);
       }
     } catch (error) {
-      console.error('Error during login:', error);
-      setLoginMessage(error.message || "Login failed. Please check your credentials.");
+      setShowNotification({ message: error.message || 'Login failed.', type: 'red' }); // Red notification
+      setTimeout(() => setShowNotification(null), 3000);
     }
   };
 
   return (
     <div
       style={{
-        display: 'flex', // Use Flexbox for centering
-        flexDirection: 'column', // Stack elements vertically
-        alignItems: 'center', // Center elements horizontally
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'left',
-        minHeight: '94.5vh', // Ensures the background covers the full viewport height
-        backgroundImage: 'url("/loginpage.jpg")', // Replace with your image path
-        backgroundSize: 'cover', // Ensures the image covers the entire background
-        backgroundPosition: 'center', // Centers the image
-        backgroundRepeat: 'no-repeat', // Prevents the image from repeating
-        color: 'white', // Ensures text is visible on the background
+        minHeight: '94.5vh',
+        backgroundImage: 'url("/loginpage.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
         padding: '20px',
-        position: 'relative', // Allows absolute positioning of child elements
+        position: 'relative',
       }}
     >
+      {/* Notification */}
+      {showNotification && (
+        <div className={`notification ${showNotification.type}`}>
+          {showNotification.message}
+        </div>
+      )}
       <h1
         style={{
-          position: 'absolute', // Allows precise positioning
-          top: '55px', // y-coordinate
-          left: '620px', // x-coordinate
+          position: 'absolute',
+          top: '55px',
+          left: '620px',
           fontSize: '34px',
           fontWeight: 'bold',
         }}
@@ -1400,65 +1416,81 @@ function Login() {
       </h1>
       <h2
         style={{
-          position: 'absolute', // Allows precise positioning
-          top: '130px', // y-coordinate
-          left: '922px', // x-coordinate
-          fontSize: '24px',
+          position: 'absolute',
+          top: '134px',
+          fontSize: '26px',
           fontWeight: 'bold',
-          color: 'rgb(25, 153, 255)', // Ensures text is visible on the background
+          color: 'rgb(25, 153, 255)',
+          position: 'absolute',
+          left: '852px',
         }}
       >
-        Or Scan With QR Code  
-
+        Or Scan With QR Code
       </h2>
+
+      {/* QR Code Section */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '220px',
+          left: '851px',
+          width: '275px',
+          height: '275px',
+          backgroundColor: 'white',
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+        }}
+      >
+        <img
+          src="/qrcode.jpg"
+          alt="QR Code"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            borderRadius: '10px',
+          }}
+        />
+      </div>
+
       <p
         style={{
-         position: 'absolute', // Allows precise positioning
-         top: '500px', // Adjust y-coordinate to position below the loginMessage
-         left: '514px', // Adjust x-coordinate to align with the form
-        transform: 'translate(0, 0)', // Fine-tune the position
-        fontSize: '18px',
-         color: 'grey', // Set the color of the additional text
-         textAlign: 'center', // Centers the text horizontally
-         textDecoration: 'underline', // Makes the text bold
+          position: 'absolute',
+          top: '500px',
+          transform: 'translate(0, 0)',
+          fontSize: '18px',
+          color: 'grey',
+          textAlign: 'center',
+          textDecoration: 'underline',
+          position: 'absolute',
+          left: '830px',
         }}
       >
-  Don't have an account? Sign up now!
-</p>
-<p
-        style={{
-         position: 'absolute', // Allows precise positioning
-         top: '490px', // Adjust y-coordinate to position below the loginMessage
-         left: '892px', // Adjust x-coordinate to align with the form
-        transform: 'translate(0, 0)', // Fine-tune the position
-        fontSize: '18px',
-         color: 'grey', // Set the color of the additional text
-         textAlign: 'center', // Centers the text horizontally
-         textDecoration: 'underline', // Makes the text bold
-        }}
-      >
-  Use the mobile app to scan the QR code
-</p>
-      <h3
-      style={{
-        position: 'absolute', // Allows precise positioning
-        top: '130px', // y-coordinate
-        left: '500px', // x-coordinate
-        fontSize: '26px',
-        fontWeight: 'bold',
-        color: 'rgb(25, 153, 255)', // Ensures text is visible on the background
+        Use the mobile app to scan the QR code
+      </p>
 
-      }}
-    >
-      Log In
+      <h3
+        style={{
+          position: 'absolute',
+          top: '130px',
+          left: '450px', // Moved slightly to the left
+          fontSize: '26px',
+          fontWeight: 'bold',
+          color: 'rgb(25, 153, 255)',
+        }}
+      >
+        Log In
       </h3>
       <form
         onSubmit={handleLogin}
         style={{
-          position: 'absolute', // Allows precise positioning
-          top: '230px', // y-coordinate
-          left: '500px', // x-coordinate
-          transform: 'translate(0, 0)', // Fine-tune the position
+          position: 'absolute',
+          top: '230px',
+          left: '450px', // Moved slightly to the left
+          transform: 'translate(0, 0)',
         }}
       >
         <div style={{ marginBottom: '15px' }}>
@@ -1496,7 +1528,7 @@ function Login() {
             Password
           </label>
           <input
-            type={showPassword ? "text" : "password"} // Toggle input type
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{
@@ -1505,13 +1537,13 @@ function Login() {
               fontSize: '16px',
               border: '1px solid #ccc',
               borderRadius: '5px',
-              paddingRight: '40px', // Add space for the icon
+              paddingRight: '40px',
             }}
             required
           />
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)} // Toggle visibility
+            onClick={() => setShowPassword(!showPassword)}
             style={{
               position: 'absolute',
               right: '10px',
@@ -1531,30 +1563,31 @@ function Login() {
         <button
           type="submit"
           style={{
-            position: 'absolute', // Allows precise positioning
-            top: '210px', // y-coordinate
-            left: '10px', // x-coordinate
-            transform: 'translate(0, 0)', // Fine-tune the position
+            position: 'absolute',
+            top: '210px',
+            left: '10px',
+            transform: 'translate(0, 0)',
             padding: '12px 40px',
             fontSize: '16px',
             cursor: 'pointer',
-            backgroundColor:" rgb(25, 153, 255)",
+            backgroundColor: "rgb(25, 153, 255)",
             color: 'White',
             border: 'none',
             borderRadius: '5px',
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)'; // Add glow effect
-            e.currentTarget.style.transform = 'scale(1)'; // Slightly enlarge the button
+            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.boxShadow = 'none'; // Remove glow effect
-            e.currentTarget.style.transform = 'scale(1)'; // Reset button size
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
-        > 
+        >
           Login
         </button>
         <button
+<<<<<<< Updated upstream
         type="button"
         style={{
           position: 'absolute',
@@ -1581,23 +1614,65 @@ function Login() {
         onClick={() => navigate('/signup')}>
         Sign Up
       </button>
+=======
+          type="button"
+          style={{
+            position: 'absolute',
+            top: '210px',
+            left: '180px',
+            transform: 'translate(0, 0)',
+            padding: '12px 38px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: "rgb(25, 153, 255)",
+            color: 'white',
+            border: 'none',
+            whiteSpace: 'nowrap',
+            borderRadius: '5px',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 5px 5px rgba(25, 153, 255, 0.2)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onClick={() => navigate('/signup')}
+        >
+          Sign Up
+        </button>
+>>>>>>> Stashed changes
       </form>
       {loginMessage && (
-  <p
-    style={{
-      position: 'absolute', // Allows precise positioning
-      top: '540px', // Adjust y-coordinate to position below the buttons
-      left: '800px', // Adjust x-coordinate to align with the form
-      transform: 'translate(0, 0)', // Fine-tune the position
-      fontSize: '22px',
-      color: loginMessage.includes('successful') ? 'rgb(25, 153, 255)' : 'red',
-      textAlign: 'center', // Centers the text horizontally
-    }}
-  >
-    {loginMessage}
-  </p>
-  
-)}
+        <p
+          style={{
+            position: 'absolute',
+            top: '540px',
+            left: '800px',
+            transform: 'translate(0, 0)',
+            fontSize: '22px',
+            color: loginMessage.includes('successful') ? 'rgb(25, 153, 255)' : 'red',
+            textAlign: 'center',
+          }}
+        >
+          {loginMessage}
+        </p>
+      )}
+      <p
+        style={{
+          position: 'absolute',
+          top: '500px',
+          left: '462px', // Moved slightly to the right
+          transform: 'translate(0, 0)',
+          fontSize: '18px',
+          color: 'grey',
+          textAlign: 'center',
+          textDecoration: 'underline',
+        }}
+      >
+        Don't have an account? Sign up now!
+      </p>
     </div>
   );
 }
@@ -1610,6 +1685,7 @@ function Signup() {
   });
   const [signupMessage, setSignupMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showNotification, setShowNotification] = useState(null); // Notification state
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
@@ -1646,11 +1722,15 @@ function Signup() {
 
       const loginData = await loginResponse.json();
       localStorage.setItem('userId', loginData.userId); // Save user ID to local storage
-      setSignupMessage('Signup successful! Redirecting to homepage...');
-      navigate('/homepage'); // Navigate to the homepage
+      setShowNotification({ message: 'Signup successful!', type: 'blue' }); // Blue notification
+      setTimeout(() => {
+        setShowNotification(null);
+        navigate('/homepage'); // Navigate to the homepage
+        setTimeout(() => window.location.reload(), 1000); // Reload the page after navigation
+      }, 1000);
     } catch (error) {
-      console.error('Error during signup:', error);
-      setSignupMessage(error.message || 'Signup failed. Please try again.');
+      setShowNotification({ message: error.message || 'Signup failed.', type: 'red' }); // Red notification
+      setTimeout(() => setShowNotification(null), 3000);
     }
   };
 
@@ -1673,10 +1753,16 @@ function Signup() {
         position: 'relative',
       }}
     >
+      {/* Notification */}
+      {showNotification && (
+        <div className={`notification ${showNotification.type}`}>
+          {showNotification.message}
+        </div>
+      )}
       <h1
         style={{
           position: 'absolute',
-          top: '50px',
+          top: '70px',
           left: '50%',
           transform: 'translate(-50%, 0)',
           color:" rgb(25, 153, 255)",
@@ -1814,8 +1900,8 @@ function Signup() {
           type="submit"
           style={{
             position: 'absolute',
-            top: '450px',
-            left: '0px',
+            top: '415px',
+            left: '-2px',
             width: '106%',
             padding: '10px 20px',
             fontSize: '20px',
