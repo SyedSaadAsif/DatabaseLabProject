@@ -4,8 +4,6 @@ import GameDetails from './components/GameDetails'; // Import the GameDetails co
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css'; // Import the new CSS file
 
-import './App.css'; // Import the new CSS file
-
 function Homepage() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
@@ -23,6 +21,14 @@ function Homepage() {
     min_price: '',
     max_price: '',
   });
+  const [currentSlide, setCurrentSlide] = useState(0); // State to track the current slide
+  const carouselImages = [
+    '/images/returnal.jpg',
+    '/images/rdr2.jpg',
+    '/images/it_takes_two.jpg',
+    '/images/doom_eternal.jpg',
+    '/images/dark_souls_3.jpg',
+  ];
 
   // Fetch games from the API
   useEffect(() => {
@@ -41,6 +47,13 @@ function Homepage() {
 
     fetchGames();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prevSlide) => (prevSlide + 1) % carouselImages.length);
+    }, 3000); // Change slide every 3 seconds
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [carouselImages.length]);
 
   // Handle filter apply
   const handleApplyFilter = async () => {
@@ -738,6 +751,68 @@ function Homepage() {
       )}
     </button>
   ))}
+</div>
+
+      {/* Carousel */}
+      <div
+  style={{
+    position: 'relative',
+    width: '80%',
+    height: '300px',
+    margin: '20px auto',
+    overflow: 'hidden',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  }}
+>
+  <img
+    src={carouselImages[currentSlide]}
+    alt={`Slide ${currentSlide + 1}`}
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      transition: 'opacity 0.5s ease-in-out',
+    }}
+  />
+  <button
+    onClick={() => setCurrentSlide((prevSlide) => (prevSlide === 0 ? carouselImages.length - 1 : prevSlide - 1))}
+    style={{
+      position: 'absolute',
+      top: '50%',
+      left: '10px',
+      transform: 'translateY(-50%)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50%',
+      width: '40px',
+      height: '40px',
+      cursor: 'pointer',
+      fontSize: '18px',
+    }}
+  >
+    &#8249;
+  </button>
+  <button
+    onClick={() => setCurrentSlide((prevSlide) => (prevSlide + 1) % carouselImages.length)}
+    style={{
+      position: 'absolute',
+      top: '50%',
+      right: '10px',
+      transform: 'translateY(-50%)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50%',
+      width: '40px',
+      height: '40px',
+      cursor: 'pointer',
+      fontSize: '18px',
+    }}
+  >
+    &#8250;
+  </button>
 </div>
 
       {/* Games List */}
