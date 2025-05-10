@@ -23,11 +23,11 @@ function Homepage() {
   });
   const [currentSlide, setCurrentSlide] = useState(0); // State to track the current slide
   const carouselImages = [
-    '/images/returnal.jpg',
-    '/images/rdr2.jpg',
-    '/images/it_takes_two.jpg',
-    '/images/doom_eternal.jpg',
-    '/images/dark_souls_3.jpg',
+    '/images/ds3_carousel.jpg',
+    '/images/sekiro_carousel.jpg',
+    '/images/eldenring_carousel.jpg', 
+    '/images/bb_carousel.jpg',
+    '/images/ghost_tsushima_carousel.jpg',
   ];
 
   // Fetch games from the API
@@ -757,8 +757,8 @@ function Homepage() {
       <div
   style={{
     position: 'relative',
-    width: '80%',
-    height: '300px',
+    width: '90%',
+    height: '600px',
     margin: '20px auto',
     overflow: 'hidden',
     borderRadius: '10px',
@@ -771,8 +771,8 @@ function Homepage() {
     style={{
       width: '100%',
       height: '100%',
-      objectFit: 'cover',
-      transition: 'opacity 0.5s ease-in-out',
+      objectFit: 'contain',
+      transition: 'opacity 1.5s ease-in-out',
     }}
   />
   <button
