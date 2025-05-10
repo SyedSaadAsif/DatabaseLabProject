@@ -1628,9 +1628,11 @@ function Signup() {
       <h1
         style={{
           position: 'absolute',
-          top: '20px',
+          top: '50px',
           left: '50%',
           transform: 'translate(-50%, 0)',
+          color:" rgb(25, 153, 255)",
+
         }}
       >
         Sign Up
@@ -1639,7 +1641,7 @@ function Signup() {
         onSubmit={handleSignup}
         style={{
           position: 'relative',
-          top: '100px',
+          top: '150px',
           left: '50%',
           transform: 'translate(-50%, 0)',
           width: '400px',
@@ -1648,12 +1650,12 @@ function Signup() {
         <div
           style={{
             position: 'absolute',
-            top: '0px',
+            top: '00px',
             left: '0px',
             width: '100%',
           }}
         >
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px',color:" rgb(25, 153, 255)", }}>Username</label>
           <input
             type="text"
             name="username"
@@ -1672,12 +1674,12 @@ function Signup() {
         <div
           style={{
             position: 'absolute',
-            top: '80px',
+            top: '100px',
             left: '0px',
             width: '100%',
           }}
         >
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' ,color:" rgb(25, 153, 255)",}}>Password</label>
           <input
             type={showPassword ? 'text' : 'password'} // Toggle input type
             name="password"
@@ -1715,12 +1717,12 @@ function Signup() {
         <div
           style={{
             position: 'absolute',
-            top: '160px',
+            top: '200px',
             left: '0px',
             width: '100%',
           }}
         >
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px',color:" rgb(25, 153, 255)", }}>Email</label>
           <input
             type="email"
             name="email"
@@ -1739,12 +1741,12 @@ function Signup() {
         <div
           style={{
             position: 'absolute',
-            top: '240px',
+            top: '300px',
             left: '0px',
             width: '100%',
           }}
         >
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Date of Birth:</label>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px',color:" rgb(25, 153, 255)", }}>Date of Birth</label>
           <input
             type="date"
             name="date_of_birth"
@@ -1764,13 +1766,13 @@ function Signup() {
           type="submit"
           style={{
             position: 'absolute',
-            top: '370px',
+            top: '450px',
             left: '0px',
             width: '106%',
             padding: '10px 20px',
-            fontSize: '16px',
+            fontSize: '20px',
             cursor: 'pointer',
-            backgroundColor: 'green',
+            backgroundColor:" rgb(25, 153, 255)",
             color: 'white',
             border: 'none',
             borderRadius: '5px',
