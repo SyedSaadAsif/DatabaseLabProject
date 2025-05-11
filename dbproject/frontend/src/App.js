@@ -22,6 +22,10 @@ function Homepage() {
     max_price: '',
   });
   const [currentSlide, setCurrentSlide] = useState(0); // State to track the current slide
+ const [userProfile, setUserProfile] = useState({
+  username: '',
+  profileColor: 'gray', // Default color
+});
   const carouselImages = [
     '/images/ds3_carousel.jpg',
     '/images/sekiro_carousel.jpg',
@@ -29,6 +33,29 @@ function Homepage() {
     '/images/bb_carousel.jpg',
     '/images/ghost_tsushima_carousel.jpg',
   ];
+
+  useEffect(() => {
+  const fetchUserProfile = async () => {
+    const userId = localStorage.getItem('userId'); // Get the user ID from localStorage
+    if (!userId) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/user/profile/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      const data = await response.json();
+      setUserProfile({
+        username: data.username,
+        profileColor: data.user_profile_image, // Use the color from the backend or default to gray
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
 
   // Fetch games from the API
   useEffect(() => {
@@ -48,6 +75,7 @@ function Homepage() {
     fetchGames();
   }, []);
 
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prevSlide) => (prevSlide + 1) % carouselImages.length);
@@ -476,37 +504,68 @@ function Homepage() {
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
     {/* User Settings Button */}
     <button
+//   style={{
+//     cursor: 'pointer',
+//     background: 'transparent', // Make background transparent
+//     border: 'none', // Remove border
+//     display: 'flex',
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     transition: 'all 0.3s ease',
+//     maxWidth: '200px', // Ensure consistent button size
+//     color: 'white', // Set the default color for the button
+//     //width: '50px', // Ensure consistent button size
+//     height: '50px', // Ensure consistent button size
+//   }}
+//   onMouseOver={(e) => {
+//     const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+//     if (icon) {
+//       icon.classList.remove('fa-regular'); // Remove the regular class
+//       icon.classList.add('fa-solid'); // Add the solid class
+//     }
+//   }}
+//   onMouseOut={(e) => {
+//     const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
+//     if (icon) {
+//       icon.classList.remove('fa-solid'); // Remove the solid class
+//       icon.classList.add('fa-regular'); // Add the regular class
+//     }
+//   }}
+//   onClick={() => navigate('/user-profile')} // Navigate to the user profile page
+
+// >
+//   <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+// </button>
+
   style={{
     cursor: 'pointer',
-    background: 'transparent', // Make background transparent
+    background: 'transparent', // Transparent background
     border: 'none', // Remove border
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.3s ease',
-    maxWidth: '200px', // Ensure consistent button size
-    color: 'white', // Set the default color for the button
-    //width: '50px', // Ensure consistent button size
+    width: '50px', // Ensure consistent button size
     height: '50px', // Ensure consistent button size
   }}
-  onMouseOver={(e) => {
-    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.classList.remove('fa-regular'); // Remove the regular class
-      icon.classList.add('fa-solid'); // Add the solid class
-    }
-  }}
-  onMouseOut={(e) => {
-    const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-    if (icon) {
-      icon.classList.remove('fa-solid'); // Remove the solid class
-      icon.classList.add('fa-regular'); // Add the regular class
-    }
-  }}
   onClick={() => navigate('/user-profile')} // Navigate to the user profile page
-
 >
-  <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
+  <div
+    style={{
+      backgroundColor: userProfile.profileColor, // Use profileColor or default to gray
+      color: 'white', // Text color
+      borderRadius: '50%', // Make it a circle
+      width: '40px', // Circle width
+      height: '40px', // Circle height
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '18px', // Font size for the letter
+      fontWeight: 'bold', // Bold text
+    }}
+  >
+    {userProfile.username.charAt(0).toUpperCase()} {/* First letter of the username */}
+  </div>
 </button>
 
     {/* Library Button */}
@@ -2028,6 +2087,33 @@ function Library() {
   const [showSearchBar, setShowSearchBar] = useState(false); // State to toggle search bar visibility
   const [searchQuery, setSearchQuery] = useState(''); // State to store the search input
   const [sortOption, setSortOption] = useState({ type: '', order: 'asc' }); // Sorting state
+  const [userProfile, setUserProfile] = useState({
+  username: '',
+  profileColor: 'gray', // Default color
+});
+
+  useEffect(() => {
+  const fetchUserProfile = async () => {
+    const userId = localStorage.getItem('userId'); // Get the user ID from localStorage
+    if (!userId) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/user/profile/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      const data = await response.json();
+      setUserProfile({
+        username: data.username,
+        profileColor: data.user_profile_image, // Use the color from the backend or default to gray
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
 
   // Fetch library games from the API
   useEffect(() => {
@@ -2107,7 +2193,40 @@ function Library() {
         {/* Left Section: User Settings and Home */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* User Settings Button */}
+          {
           <button
+  style={{
+    cursor: 'pointer',
+    background: 'transparent', // Transparent background
+    border: 'none', // Remove border
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    width: '50px', // Ensure consistent button size
+    height: '50px', // Ensure consistent button size
+  }}
+  onClick={() => navigate('/user-profile')} // Navigate to the user profile page
+>
+  <div
+    style={{
+      backgroundColor: userProfile.profileColor || 'gray', // Use profileColor or default to gray
+      color: 'white', // Text color
+      borderRadius: '50%', // Make it a circle
+      width: '40px', // Circle width
+      height: '40px', // Circle height
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '18px', // Font size for the letter
+      fontWeight: 'bold', // Bold text
+    }}
+  >
+    {userProfile.username.charAt(0).toUpperCase()} {/* First letter of the username */}
+  </div>
+</button>
+          
+          /* <button
             style={{
               cursor: 'pointer',
               background: 'transparent',
@@ -2137,7 +2256,8 @@ function Library() {
             onClick={() => navigate('/user-profile')}
           >
             <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
-          </button>
+          </button> 
+          */}
 
           {/* Home Button */}
           <button
@@ -2417,6 +2537,7 @@ function UserProfile() {
   }); // User profile data
   const [newFunds, setNewFunds] = useState(0); // Amount to add to wallet
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [notification, setNotification] = useState(null); // Notification state
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId'); // Get logged-in user's ID from localStorage
 
@@ -2439,10 +2560,11 @@ function UserProfile() {
                   username: data.username,
                   photo: `/images/${data.user_profile_image}`, // Use the image path from the database
                   accountLevel: data.Account_Level,
-                  password: '********', // Mask the password
+                  password: data.password, // Mask the password
                   email: data.email,
                   birthDate: formattedBirthDate,
                   wallet: data.wallet,
+                  profileColor: data.user_profile_image,
               });
           } catch (error) {
               console.error('Error fetching user profile:', error);
@@ -2468,7 +2590,13 @@ function UserProfile() {
               }),
           });
           const data = await response.json();
-          alert(data.message); // Show success message
+          // Show success notification
+      setNotification({ message: data.message, type: 'blue' });
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
       } catch (error) {
           console.error('Error updating profile:', error);
       }
@@ -2531,6 +2659,12 @@ function UserProfile() {
               alignItems: 'center',
           }}
       >
+        {/* Notification */}
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
           {/* User Photo */}
           {/* <div style={{ position: 'relative', marginBottom: '20px' }}>
               <img
@@ -2599,7 +2733,7 @@ function UserProfile() {
 
 
           {/* Editable Fields */}
-          <div style={{ marginBottom: '15px', width: '30%' }}>
+          <div style={{ marginBottom: '20px', width: '30%' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
               <div style={{ position: 'relative' }}>
                   <input

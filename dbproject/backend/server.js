@@ -333,6 +333,8 @@ app.get('/api/user/profile/:userID', async (req, res) => {
             .input('User_ID', sql.Int, userID) // Pass the User_ID as input
             .execute('ViewUserProfile'); // Call the stored procedure
 
+             console.log('ViewUserProfile result:', result.recordset);
+
         // Check if the procedure returned a message or user profile details
         if (result.recordset.length === 1 && result.recordset[0].message) {
             // Return the message if the user is not found
@@ -345,6 +347,7 @@ app.get('/api/user/profile/:userID', async (req, res) => {
         console.error('Error fetching user profile:', err);
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
+ 
 });
 
 
