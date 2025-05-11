@@ -1,6 +1,6 @@
 create database Project
 use Project
-
+drop database Project
 CREATE TABLE [User](
     User_ID INT  IDENTITY(1,1) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
@@ -109,7 +109,7 @@ FROM Library L
 JOIN Game_Catalogue G ON L.game_ID = G.Game_ID 
 where L.User_ID = @userID;
 end
-
+go
 CREATE PROCEDURE Search_Game
     @title VARCHAR(255) = NULL,
     @min_rating INT = NULL,
@@ -172,7 +172,7 @@ BEGIN
     END
 END;
 GO
-exec Purchase 10,14
+
 GO
 -- add to cart
 CREATE PROCEDURE AddToCart
@@ -345,7 +345,6 @@ END;
 GO
 	
 go
-exec GetWalletBalance 10
 -- procedure to remove game from cart
 CREATE PROCEDURE RemoveGameFromCart
     @User_ID INT,
@@ -508,7 +507,7 @@ set user_profile_image = 'Brown' where User_ID = 8
 
 go
 update [user]
-set user_profile_image = 'ForestGreen' where User_ID = 9
+set user_profile_image = 'ForestGreen' where User_ID = 10
 
 GO
 -- View to view all games
@@ -625,11 +624,11 @@ INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_i
 
 INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_id, Price, release_date, discount) VALUES
 ('Starfield', 'Explore the galaxy in Bethesda’s new open-world space RPG.', 'starfield.jpg', 8, 4, 69.99, '2023-09-06', 10),
-('Death Stranding', 'A mysterious and atmospheric journey across a fractured world.', 'death_stranding.jpg', 8, 11, 49.99, '2019-11-08', 30),
+('Death Stranding', 'A mysterious and atmospheric journey across a fractured world.', 'death_stranding.jpg', 8, 10, 49.99, '2019-11-08', 30),
 ('Resident Evil Village', 'Face gothic horror in the latest installment of the Resident Evil saga.', 're_village.jpg', 9, 1, 59.99, '2021-05-07', 25),
 ('Ghost of Tsushima', 'An open-world samurai action game set during the Mongol invasion.', 'ghost_tsushima.jpg', 10, 2, 59.99, '2020-07-17', 20),
 ('Returnal', 'A sci-fi third-person shooter with roguelike elements.', 'returnal.jpg', 8, 2, 69.99, '2021-04-30', 15),
-('It Takes Two', 'A unique co-op adventure about love and teamwork.', 'it_takes_two.jpg', 9, 11, 39.99, '2021-03-26', 20),
+('It Takes Two', 'A unique co-op adventure about love and teamwork.', 'it_takes_two.jpg', 9, 10, 39.99, '2021-03-26', 20),
 ('Baldur''s Gate 3', 'A deep fantasy RPG based on Dungeons & Dragons.', 'bg3.jpg', 10, 10, 59.99, '2023-08-03', 10),
 ('Metroid Dread', 'Samus Aran returns in a high-speed 2D platformer.', 'metroid_dread.jpg', 9, 3, 59.99, '2021-10-08', 10),
 ('Splatoon 3', 'Team up in colorful, fast-paced online ink battles.', 'splatoon3.jpg', 8, 3, 59.99, '2022-09-09', 5),
@@ -656,58 +655,6 @@ INSERT INTO Reviews (user_ID, game_ID, Comment, Comment_date, likes) VALUES
 ( 9, 17, 'Super Mario Odyssey is pure joy!', '2024-04-23', 140),
 ( 9, 8, 'Elden Ring is a masterpiece!', '2024-04-24', 180);
 
--- Inserting Cart Data
--- Updated Cart entries (Games are fully distributed)
-INSERT INTO Cart (UserID, GameID, Game_Count) VALUES
-(1, 1, 1), (1, 4, 1), (1, 7, 1), (1, 9, 1), (1, 14, 1),
-(2, 2, 1), (2, 5, 1), (2, 8, 1), (2, 10, 1),
-(3, 3, 2), (3, 6, 1), (3, 11, 1), (3, 15, 1),
-(4, 5, 1), (4, 12, 1), (4, 17, 1),
-(5, 13, 1), (5, 1, 1), (5, 9, 1),
-(6, 14, 1), (6, 2, 1), (6, 4, 1),
-(7, 15, 1), (7, 7, 1), (7, 5, 1),
-(8, 16, 1), (8, 6, 1), (8, 10, 1),
-(9, 17, 1), (9, 8, 1), (9, 13, 1);
-
--- Inserting Library Data
-INSERT INTO Library (User_ID, game_ID, Purchase_date, Last_played, Play_time) VALUES
-(1, 1, '2023-11-15', '2024-04-19', 120),
-(1, 4, '2023-12-20', '2024-04-18', 160),
-(1, 7, '2024-01-10', '2024-04-15', 300),
-(1, 9, '2024-02-10', '2024-04-14', 220),
-(1, 14,'2024-03-01', '2024-04-13', 110),
-
-(2, 2, '2024-01-15', '2024-04-17', 240),
-(2, 5, '2024-01-22', '2024-04-14', 100),
-(2, 8, '2024-02-15', '2024-04-16', 330),
-(2, 10, '2024-03-05', '2024-04-15', 180),
-
-(3, 3, '2024-01-10', '2024-04-18', 360),
-(3, 6, '2024-02-01', '2024-04-17', 400),
-(3, 11, '2024-02-20', '2024-04-16', 280),
-
-(4, 12, '2024-01-20', '2024-04-12', 180),
-(4, 17, '2024-03-10', '2024-04-11', 220),
-
-(5, 13, '2024-02-05', '2024-04-10', 140),
-(5, 1, '2024-02-10', '2024-04-09', 160),
-(5, 9, '2024-02-15', '2024-04-08', 120),
-
-(6, 2,'2024-03-10', '2024-04-09', 100),
-(6, 4, '2024-03-20', '2024-04-08', 130),
-
-(7, 5, '2024-02-05', '2024-04-06', 210),
-(7, 7, '2024-02-15', '2024-04-05', 190),
-(7, 15, '2024-01-25', '2024-04-07', 250),
-
-(8, 16, '2024-03-05', '2024-04-04', 270),
-(8, 10, '2024-03-15', '2024-04-03', 150),
-
-(9 , 8 , '2023-07-18' , '2024-12-15' , 490),
-(9, 17, '2024-03-25', '2024-04-02', 130),
-(9, 13, '2024-04-01', '2024-04-01', 90);
-
-
 -- Inserting System Requirements
 INSERT INTO System_Requirements (Game_ID, Processor, Gpu, Ram, Storage, OS, DXD3_version) VALUES
 (1, 'Intel i7-9700K', 'RTX 2080', '16GB', '50GB SSD', 'Windows 11', 'DX12'),
@@ -727,6 +674,18 @@ INSERT INTO System_Requirements (Game_ID, Processor, Gpu, Ram, Storage, OS, DXD3
 (15, 'Intel i3-2100', 'GTX 750 Ti', '8GB', '25GB HDD', 'Windows 7 64-bit', 'DX11'),
 (16, 'Intel i5-6600K','GTX 970', '8GB', '100GB SSD', 'Windows 10 64-bit', 'DX12'),
 (17, 'Intel i5-4430', 'GTX 660', '8GB', '5.6GB SSD', 'Windows 10', 'DX11');
+
+INSERT INTO System_Requirements (Game_ID, Processor, Gpu, Ram, Storage, OS, DXD3_version) VALUES
+(18, 'Intel i5-10600K / Ryzen 5 3600', 'RTX 2080 / RX 6800 XT', '16GB', '125GB SSD', 'Windows 10/11', 'DX12'), -- Starfield
+(19, 'Intel i7-6700 / Ryzen 5 1600', 'GTX 1060 / RX 590', '8GB', '80GB HDD', 'Windows 10', 'DX12'), -- Death Stranding
+(20, 'Intel i5-7500 / Ryzen 3 1200', 'GTX 1050 Ti / RX 560', '8GB', '45GB SSD', 'Windows 10', 'DX12'), -- Resident Evil Village
+(21, 'Intel i5-4670 / AMD FX-8350', 'GTX 970 / RX 570', '8GB', '50GB HDD', 'Windows 10', 'DX11'), -- Ghost of Tsushima
+(22, 'Intel i5-8400 / Ryzen 5 2600', 'GTX 1060 / RX 580', '16GB', '60GB SSD', 'Windows 10', 'DX12'), -- Returnal
+(23, 'Intel i3-2100 / AMD FX-6300', 'GTX 660 / Radeon HD 7870', '8GB', '50GB HDD', 'Windows 10', 'DX11'), -- It Takes Two
+(24, 'Intel i5-9600K / Ryzen 5 3600', 'GTX 1070 / RX 5700', '16GB', '150GB SSD', 'Windows 10/11', 'DX11'), -- Baldur's Gate 3
+(25, 'Intel i5-6400 / AMD FX-8300', 'GTX 750 Ti / R7 360', '8GB', '12GB SSD', 'Windows 10', 'DX11'), -- Metroid Dread
+(26, 'Intel i5-4430 / AMD FX-6300', 'GTX 960 / R9 380', '8GB', '20GB', 'Windows 10', 'DX11'), -- Splatoon 3
+(27, 'Intel i5-7600K / Ryzen 5 1600', 'GTX 1060 / RX 590', '16GB', '90GB SSD', 'Windows 10', 'DX12'); -- Alan Wake II
 
 -- test procedure update user profile
 EXEC UpdateUserProfile 
@@ -761,10 +720,12 @@ select * from Cart where USERID = 1;
 select * from Reviews where user_id = 1
 
 drop table [User]
+drop table cart
 drop table Game_Catalogue
 drop table reviews 
 drop table System_Requirements
 drop table library
+drop table reviewlikes
 
 drop table cart
 Delete from Library where USER_ID = 10
