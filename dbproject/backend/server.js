@@ -30,21 +30,20 @@ app.use((err, req, res, next) => {
 // Signup API
 app.post('/api/signup', async (req, res) => {
     const { username, password, email, date_of_birth } = req.body;
-    // Debugging: Log incoming request body
-    console.log("Signup Request Body:", req.body);
 
     try {
         const pool = await poolPromise;
-        await pool.request()
-            .input('username', username)
-            .input('password', password)
-            .input('email', email)
-            .input('date_of_birth', date_of_birth)
+        const result = await pool.request()
+            .input('username', sql.VarChar, username)
+            .input('password', sql.VarChar, password)
+            .input('email', sql.VarChar, email)
+            .input('date_of_birth', sql.Date, date_of_birth)
+            .output('msg', sql.NVarChar(255)) // Capture the output message
             .execute('Signup');
-        
-        res.status(201).json({ message: 'User signed up successfully' });
+
+        res.status(201).json({ message: result.output.msg }); // Return the message to the frontend
+        console.log('Signup result:', result.output.msg); // Log the message
     } catch (err) {
-        console.log(username, password, email, date_of_birth);
         console.error('Error during signup:', err);
         res.status(500).json({ error: 'Failed to sign up' });
     }

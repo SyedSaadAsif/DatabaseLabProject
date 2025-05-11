@@ -9,7 +9,7 @@ CREATE TABLE [User](
     date_of_birth DATE NOT NULL,
     wallet INT DEFAULT 0,
     account_level int DEFAULT 0,
-    user_profile_image VARCHAR(255)
+    user_profile_image VARCHAR(255) Default 'Teal'
 );
 
 CREATE TABLE Game_Catalogue (
@@ -76,16 +76,35 @@ CREATE TABLE ReviewLikes (
 
 GO
 -- Signup Procedure
+drop procedure Signup
+-- Modified Signup Procedure
 CREATE PROCEDURE Signup
     @username VARCHAR(255),
     @password VARCHAR(255),
     @email VARCHAR(255),
-    @date_of_birth DATE
+    @date_of_birth DATE,
+    @msg NVARCHAR(255) OUTPUT -- Output parameter for the message
 AS
 BEGIN
-    INSERT INTO [User] (username, password, email, date_of_birth)
-    VALUES (@username, @password, @email, @date_of_birth);
+    SET NOCOUNT ON;
+
+    -- Check if the username already exists
+    IF NOT EXISTS (SELECT 1 FROM [User] WHERE username = @username)
+    BEGIN
+        -- Insert the new user into the database
+        INSERT INTO [User] (username, password, email, date_of_birth)
+        VALUES (@username, @password, @email, @date_of_birth);
+
+        -- Set the success message
+        SET @msg = 'User signed up successfully.';
+    END
+    ELSE
+    BEGIN
+        -- Set the failure message
+        SET @msg = 'Username already taken.';
+    END
 END;
+GO
 GO
 -- Login Procedure
 CREATE PROCEDURE Login
@@ -332,7 +351,7 @@ BEGIN
        PRINT 'Error: Amount to add must be greater than zero.';
     END
 END;
-drop procedure GetWalletBalance
+go
 CREATE PROCEDURE GetWalletBalance
     @UserID INT -- Input parameter for the user ID
 AS
@@ -345,7 +364,6 @@ END;
 GO
 	
 go
--- procedure to remove game from cart
 CREATE PROCEDURE RemoveGameFromCart
     @User_ID INT,
     @Game_ID INT
@@ -507,7 +525,7 @@ set user_profile_image = 'Brown' where User_ID = 8
 
 go
 update [user]
-set user_profile_image = 'ForestGreen' where User_ID = 10
+set user_profile_image = 'ForestGreen' where User_ID = 9
 
 GO
 -- View to view all games

@@ -32,6 +32,12 @@ function Homepage() {
     '/images/eldenring_carousel.jpg', 
     '/images/bb_carousel.jpg',
     '/images/ghost_tsushima_carousel.jpg',
+    '/images/hollow_knight_carousel.jpg',
+    '/images/spider_man_carousel.png',
+    '/images/witcher3_carousel.jpg',
+
+
+    
   ];
 
   useEffect(() => {
@@ -79,8 +85,8 @@ function Homepage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prevSlide) => (prevSlide + 1) % carouselImages.length);
-    }, 3000); // Change slide every 3 seconds
-    return () => clearInterval(interval); // Cleanup on unmount
+    }, 5000); // Change slide every 3 seconds
+    return() => clearInterval(interval); // Cleanup on unmount
   }, [carouselImages.length]);
 
   // Handle filter apply
@@ -504,39 +510,6 @@ function Homepage() {
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
     {/* User Settings Button */}
     <button
-//   style={{
-//     cursor: 'pointer',
-//     background: 'transparent', // Make background transparent
-//     border: 'none', // Remove border
-//     display: 'flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     transition: 'all 0.3s ease',
-//     maxWidth: '200px', // Ensure consistent button size
-//     color: 'white', // Set the default color for the button
-//     //width: '50px', // Ensure consistent button size
-//     height: '50px', // Ensure consistent button size
-//   }}
-//   onMouseOver={(e) => {
-//     const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-//     if (icon) {
-//       icon.classList.remove('fa-regular'); // Remove the regular class
-//       icon.classList.add('fa-solid'); // Add the solid class
-//     }
-//   }}
-//   onMouseOut={(e) => {
-//     const icon = e.currentTarget.querySelector('i'); // Target the icon inside the button
-//     if (icon) {
-//       icon.classList.remove('fa-solid'); // Remove the solid class
-//       icon.classList.add('fa-regular'); // Add the regular class
-//     }
-//   }}
-//   onClick={() => navigate('/user-profile')} // Navigate to the user profile page
-
-// >
-//   <i className="fa-regular fa-user" style={{ fontSize: '24px', color: 'inherit' }}></i>
-// </button>
-
   style={{
     cursor: 'pointer',
     background: 'transparent', // Transparent background
@@ -816,24 +789,44 @@ function Homepage() {
       <div
   style={{
     position: 'relative',
-    width: '90%',
-    height: '600px',
+    width:'90%',
+    maxwidth: '1200px',
+    height: '675px',
     margin: '20px auto',
     overflow: 'hidden',
     borderRadius: '10px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0)',
   }}
 >
-  <img
-    src={carouselImages[currentSlide]}
-    alt={`Slide ${currentSlide + 1}`}
+<div
     style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain',
-      transition: 'opacity 1.5s ease-in-out',
+      display: 'flex', // Arrange slides in a row
+      transform: `translateX(-${currentSlide * 100}%)`, // Slide transition
+      transition: 'transform 0.4s ease-in-out', // Smooth sliding effect
+      width: `${1 * 100}%`, // Set width based on the number of slides
     }}
-  />
+  >
+    {carouselImages.map((image, index) => (
+      <div
+        key={index}
+        style={{
+          width: '100%', // Each slide takes up 100% of the container's width
+          height: '675px', // Match the carousel container height
+          flexShrink: 0, // Prevent shrinking of slides
+        }}
+      >
+        <img
+          src={image}
+          alt={`Slide ${index + 1}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain', // Ensure the image scales properly without distortion
+          }}
+        />
+      </div>
+    ))}
+  </div>
   <button
     onClick={() => setCurrentSlide((prevSlide) => (prevSlide === 0 ? carouselImages.length - 1 : prevSlide - 1))}
     style={{
@@ -1843,7 +1836,15 @@ function Signup() {
         const errorData = await signupResponse.json();
         throw new Error(errorData.error || 'Signup failed');
       }
-
+      const signupData = await signupResponse.json();
+      if (signupData.message === 'Username already taken.') {
+        // If the username is already taken, show an error and stop further actions
+        setShowNotification({ message: 'Username already taken.', type: 'red' }); // Blue notification
+        setTimeout(() => {
+          setShowNotification(null);
+        }, 2000);
+        return;
+      }
       const loginResponse = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: {
