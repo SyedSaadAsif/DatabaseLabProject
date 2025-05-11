@@ -2528,408 +2528,376 @@ function Library() {
 
 function UserProfile() {
   const [userProfile, setUserProfile] = useState({
-      username: '',
-      photo: '',
-      accountLevel: '',
-      password: '',
-      email: '',
-      birthDate: '',
-      wallet: 0,
-  }); // User profile data
-  const [newFunds, setNewFunds] = useState(0); // Amount to add to wallet
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const [notification, setNotification] = useState(null); // Notification state
+    username: '',
+    photo: '',
+    accountLevel: '',
+    password: '',
+    email: '',
+    birthDate: '',
+    wallet: 0,
+    profileColor: 'gray', // Default profile color
+  });
+  const [newFunds, setNewFunds] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [isEditingColor, setIsEditingColor] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('');
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId'); // Get logged-in user's ID from localStorage
+  const userId = localStorage.getItem('userId');
 
   // Fetch user profile from the backend
   useEffect(() => {
-      const fetchUserProfile = async () => {
-          try {
-              const response = await fetch(`http://localhost:5000/api/user/profile/${userId}`);
-              if (!response.ok) {
-                  throw new Error('Failed to fetch user profile');
-              }
-              const data = await response.json(); 
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/user/profile/${userId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+        const data = await response.json();
 
-               // Format the birthDate to 'YYYY-MM-DD'
-            const formattedBirthDate = data.date_of_birth
-                ? new Date(data.date_of_birth).toISOString().split('T')[0]
-                : '';
-
-              setUserProfile({
-                  username: data.username,
-                  photo: `/images/${data.user_profile_image}`, // Use the image path from the database
-                  accountLevel: data.Account_Level,
-                  password: data.password, // Mask the password
-                  email: data.email,
-                  birthDate: formattedBirthDate,
-                  wallet: data.wallet,
-                  profileColor: data.user_profile_image,
-              });
-          } catch (error) {
-              console.error('Error fetching user profile:', error);
-          }
-      };
-
-      if (userId) {
-          fetchUserProfile();
+        setUserProfile({
+          username: data.username,
+          photo: `/images/${data.user_profile_image}`,
+          accountLevel: data.Account_Level,
+          password: data.password,
+          email: data.email,
+          birthDate: data.date_of_birth
+            ? new Date(data.date_of_birth).toISOString().split('T')[0]
+            : '',
+          wallet: data.wallet,
+          profileColor: data.user_profile_image || 'gray',
+        });
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
+    };
+
+    if (userId) {
+      fetchUserProfile();
+    }
   }, [userId]);
 
   // Handle profile updates
   const handleProfileUpdate = async () => {
-      try {
-          const response = await fetch('http://localhost:5000/api/user/profile', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  userID: userId,
-                  newUsername: userProfile.username,
-                  newEmail: userProfile.email,
-                  newPassword: userProfile.password,
-              }),
-          });
-          const data = await response.json();
-          // Show success notification
+    try {
+      const response = await fetch('http://localhost:5000/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userID: userId,
+          newUsername: userProfile.username,
+          newEmail: userProfile.email,
+          newPassword: userProfile.password,
+        }),
+      });
+      const data = await response.json();
       setNotification({ message: data.message, type: 'blue' });
 
-      // Hide notification after 3 seconds
       setTimeout(() => {
         setNotification(null);
       }, 3000);
-      } catch (error) {
-          console.error('Error updating profile:', error);
-      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
 
   // Handle adding funds to wallet
   const handleAddFunds = async () => {
-      try {
-          const response = await fetch('http://localhost:5000/api/user/wallet', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  userID: userId,
-                  amount: newFunds,
-              }),
-          });
-          const data = await response.json();
-          alert(data.message); // Show success message
-          setUserProfile((prev) => ({ ...prev, wallet: prev.wallet + newFunds })); // Update wallet locally
-          setNewFunds(0); // Reset funds input
-      } catch (error) {
-          console.error('Error adding funds:', error);
-      }
+    try {
+      const response = await fetch('http://localhost:5000/api/user/wallet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userID: userId,
+          amount: newFunds,
+        }),
+      });
+      const data = await response.json();
+      setUserProfile((prev) => ({ ...prev, wallet: prev.wallet + newFunds }));
+      setNewFunds(0);
+      setNotification({ message: data.message, type: 'blue' });
+
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error adding funds:', error);
+    }
   };
 
-  // Handle photo upload
-  // const handlePhotoUpload = async (e) => {
-  //     const file = e.target.files[0];
-  //     if (file) {
-  //         const formData = new FormData();
-  //         formData.append('photo', file);
-  //         formData.append('userID', userId);
+  // Handle profile color update
+  const handleColorUpdate = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userID: userId,
+          newProfileImage: selectedColor,
+        }),
+      });
 
-  //         try {
-  //             const response = await fetch('http://localhost:5000/api/user/photo', {
-  //                 method: 'POST',
-  //                 body: formData,
-  //             });
-  //             const data = await response.json();
-  //             alert(data.message); // Show success message
-  //             setUserProfile((prev) => ({ ...prev, photo: `/images/${data.newPhoto}` })); // Update photo locally
-  //         } catch (error) {
-  //             console.error('Error uploading photo:', error);
-  //         }
-  //     }
-  // };
+      if (!response.ok) {
+        throw new Error('Failed to update profile color');
+      }
+
+      const data = await response.json();
+      setUserProfile((prev) => ({ ...prev, profileColor: selectedColor }));
+      setNotification({ message: data.message, type: 'blue' });
+      setTimeout(() => setNotification(null), 3000);
+      setIsEditingColor(false);
+    } catch (error) {
+      console.error('Error updating profile color:', error);
+    }
+  };
 
   return (
-      <div
-          style={{
-              minHeight: '100vh',
-              backgroundImage: 'url("/background.jpg")', // Same background as homepage
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              color: 'white',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-          }}
-      >
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/background.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'row', // Row layout for left and right sections
+        alignItems: 'flex-start',
+        textAlign: 'left',
+        position: 'relative',
+      }}
+    >
+      {/* Left Section */}
+      <div style={{ flex: 1, paddingRight: '20px' , paddingLeft: '120px' }}>
         {/* Notification */}
-      {notification && (
-        <div className={`notification ${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
-          {/* User Photo */}
-          {/* <div style={{ position: 'relative', marginBottom: '20px' }}>
-              <img
-                  src={userProfile.photo}
-                  alt="User"
-                  style={{
-                      width: '300px', // Three times bigger
-                      height: '300px',
-                      borderRadius: '50%', // Circle
-                      objectFit: 'cover',
-                      border: '3px solid white',
-                  }}
-              />
-              <label
-                  htmlFor="photoUpload"
-                  style={{
-                      position: 'absolute',
-                      bottom: '10px',
-                      right: '10px',
-                      backgroundColor: 'blue',
-                      color: 'white',
-                      padding: '10px',
-                      borderRadius: '40%',
-                      cursor: 'pointer',
-                  }}
-              >
-                  <i className="fa fa-camera" style={{ fontSize: '20px' }}></i>
-              </label>
-              <input
-                  id="photoUpload"
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handlePhotoUpload}
-              />
-          </div> */}
-
-          {/* Username and Account Level */}
-          <h1 style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              Hey! {userProfile.username}
-              <span
-                 style={{
-                  background: 'linear-gradient(135deg, rgb(155, 217, 255), rgb(2, 16, 207), rgb(255, 255, 255))', // Add a mix of colors
-                  backgroundSize: '200% 200%', // Larger background for smoother blending
-                  animation: 'gradientBlend 4s linear infinite', // Faster and smoother animation
-                  color: 'white', // Ensure text is prominently visible
-                  padding: '10px 15px', // Adjust padding for better spacing
-                  borderRadius: '50%', // Make it a circle
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  display: 'flex', // Center content inside the circle
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minWidth: '20px', // Ensure consistent circle size
-                  height: '25px', // Ensure consistent circle size
-                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)', // Subtle shadow for better visibility
-                }}
-                  
-  
-              >
-                  {userProfile.accountLevel}
-              </span>
-          </h1>
-
-          
-
-
-          {/* Editable Fields */}
-          <div style={{ marginBottom: '20px', width: '30%' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
-              <div style={{ position: 'relative' }}>
-                  <input
-                      type="text"
-                      value={userProfile.username}
-                      onChange={(e) => setUserProfile({ ...userProfile, username: e.target.value })}
-                      style={{
-                          width: '100%',
-                          padding: '10px',
-                          fontSize: '16px',
-                          border: '1px solid #ccc',
-                          borderRadius: '25px',
-                          backgroundColor: 'white',
-                      }}
-                  />
-                  <i
-                      className="fa fa-pen"
-                      style={{
-                          position: 'absolute',
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          fontSize: '16px',
-                          cursor: 'pointer',
-                          color: 'blue',
-                      }}
-                      title="Editable"
-                  ></i>
-              </div>
+        {notification && (
+          <div className={`notification ${notification.type}`}>
+            {notification.message}
           </div>
-          <div style={{ marginBottom: '15px', width: '30%' }}>
-  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
-  <div style={{ position: 'relative' }}>
-    <input
-      type={showPassword ? 'text' : 'password'} // Toggle input type
-      value={userProfile.password}
-      onChange={(e) => setUserProfile({ ...userProfile, password: e.target.value })}
-      style={{
-        width: '100%',
-        padding: '10px',
-        fontSize: '16px',
-        border: '1px solid #ccc',
-        borderRadius: '25px',
-        backgroundColor: 'white',
-        paddingRight: '15px', // Add space for the icons
-      }}
-    />
-    {/* Eye Icon for Toggling Password Visibility */}
-    <i
-      className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} // Change icon based on visibility
-      style={{
-        position: 'absolute',
-        right: '35px', // Position the eye icon
-        top: '50%',
-        transform: 'translateY(-50%)',
-        fontSize: '16px',
-        cursor: 'pointer',
-        color: 'black',
-      }}
-      onClick={() => setShowPassword(!showPassword)} // Toggle password visibility
-      title={showPassword ? 'Hide Password' : 'Show Password'} // Tooltip for the icon
-    ></i>
-    {/* Pen Icon for Editing */}
-    <i
-      className="fa fa-pen"
-      style={{
-        position: 'absolute',
-        right: '10px', // Position the pen icon
-        top: '50%',
-        transform: 'translateY(-50%)',
-        fontSize: '16px',
-        cursor: 'pointer',
-        color: 'blue',
-      }}
-      title="Editable"
-    ></i>
-  </div>
-</div>
-          <div style={{ marginBottom: '15px', width: '30%' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
-              <div style={{ position: 'relative' }}>
-                  <input
-                      type="email"
-                      value={userProfile.email}
-                      onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
-                      style={{
-                          width: '100%',
-                          padding: '10px',
-                          fontSize: '16px',
-                          border: '1px solid #ccc',
-                          borderRadius: '25px',
-                          backgroundColor: 'white',
-                      }}
-                  />
-                  <i
-                      className="fa fa-pen"
-                      style={{
-                          position: 'absolute',
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          fontSize: '16px',
-                          cursor: 'pointer',
-                          color: 'blue',
-                      }}
-                      title="Editable"
-                  ></i>
-              </div>
-          </div>
-          <div style={{ marginBottom: '15px', width: '30%', position: 'relative' }}>
-  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Birth Date:</label>
-  <input
-      type="text"
-      value={userProfile.birthDate}
-      readOnly
-      style={{
-          width: '100%',
-          padding: '10px',
-          fontSize: '16px',
-          border: '1px solid #ccc',
-          borderRadius: '25px',
-          backgroundColor: 'white',
-          color: 'black', // Always black for the value
-      }}
-  />
-  <span
-      style={{
-          position: 'absolute',
-          right: '15px',
-          top: '50%',
-          transform: 'translateY(10%)',
-          fontSize: '14px',
-          color: '#555', // Dark grey for the format
-          pointerEvents: 'none', // Prevent interaction with the span
-      }}
-  >
-      yyyy-mm-dd
-  </span>
-</div>
+        )}
 
-          {/* Wallet Section */}
-<div style={{ marginBottom: '15px', width: '30%' }}>
-  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Wallet:</label>
-  <div style={{ position: 'relative' }}>
-      <input
-          type="text"
-          value={`Current: $${userProfile.wallet}`}
-          readOnly
+        {/* Username and Account Level */}
+        <h1
           style={{
-              width: '100%',
-              padding: '10px',
-              fontSize: '16px',
-              border: '1px solid #ccc',
-              borderRadius: '25px',
-              backgroundColor: '#f0f0f0', // Light gray to indicate it's read-only
-              marginBottom: '10px',
+            textAlign: 'center',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            width: '100%',
+            marginLeft: '-80px', // Move the entire section 50px to the left
           }}
-      />
-      <input
-          type="number"
-          placeholder="Add funds"
-          value={newFunds}
-          onChange={(e) => setNewFunds(Number(e.target.value))}
-          style={{
+        >
+          Hey! {userProfile.username}
+          <span
+            style={{
+              background: 'linear-gradient(135deg, rgb(155, 217, 255), rgb(2, 16, 207), rgb(255, 255, 255))',
+              backgroundSize: '200% 200%',
+              animation: 'gradientBlend 4s linear infinite',
+              color: 'white',
+              padding: '10px 15px',
+              borderRadius: '50%',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '20px',
+              height: '25px',
+              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+            }}
+          >
+            {userProfile.accountLevel}
+          </span>
+        </h1>
+
+        {/* Editable Fields */}
+        <div style={{ marginBottom: '20px', width: '70%' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Username:</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              value={userProfile.username}
+              onChange={(e) => setUserProfile({ ...userProfile, username: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '16px',
+                border: '1px solid #ccc',
+                borderRadius: '25px',
+                backgroundColor: 'white',
+              }}
+            />
+            <i
+              className="fa fa-pen"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: 'blue',
+              }}
+              title="Editable"
+            ></i>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px', width: '70%' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Email:</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="email"
+              value={userProfile.email}
+              onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '16px',
+                border: '1px solid #ccc',
+                borderRadius: '25px',
+                backgroundColor: 'white',
+              }}
+            />
+            <i
+              className="fa fa-pen"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: 'blue',
+              }}
+              title="Editable"
+            ></i>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px', width: '70%' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Password:</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={userProfile.password}
+              onChange={(e) => setUserProfile({ ...userProfile, password: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '16px',
+                border: '1px solid #ccc',
+                borderRadius: '25px',
+                backgroundColor: 'white',
+              }}
+            />
+            <i
+              className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+              style={{
+                position: 'absolute',
+                right: '35px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: 'black',
+              }}
+              onClick={() => setShowPassword(!showPassword)}
+              title={showPassword ? 'Hide Password' : 'Show Password'}
+            ></i>
+            <i
+              className="fa fa-pen"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: 'blue',
+              }}
+              title="Editable"
+            ></i>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px', width: '70%' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Birth Date:</label>
+          <input
+            type="text"
+            value={userProfile.birthDate}
+            readOnly
+            style={{
               width: '100%',
               padding: '10px',
               fontSize: '16px',
               border: '1px solid #ccc',
               borderRadius: '25px',
               backgroundColor: 'white',
-          }}
-      />
-      <button
-          onClick={handleAddFunds}
-          style={{
-              position: 'absolute',
-              right: '10px',
-              top: '78%',
-              transform: 'translateY(-50%)',
-              padding: '5px 10px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              backgroundColor: 'green',
-              color: 'white',
-              border: 'none',
-              borderRadius: '15px',
-          }}
-      >
-          Add
-      </button>
-  </div>
-</div>
+              color: 'black',
+            }}
+          />
+        </div>
 
-          {/* Save Changes and Back to Homepage */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '210px', marginTop: '30px' }}>
+        <div style={{ marginBottom: '20px', width: '70%' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Wallet:</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              value={`Current: $${userProfile.wallet}`}
+              readOnly
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '16px',
+                border: '1px solid #ccc',
+                borderRadius: '25px',
+                backgroundColor: '#f0f0f0',
+                 marginBottom: '15px', // Add margin to increase the gap
+              }}
+            />
+            <input
+              type="number"
+              placeholder="Add funds"
+              value={newFunds}
+              onFocus={() => setNewFunds('')}
+              onBlur={(e) => setNewFunds(e.target.value === '' ? 0 : Number(e.target.value))}
+              onChange={(e) => setNewFunds(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '16px',
+                border: '1px solid #ccc',
+                borderRadius: '25px',
+                backgroundColor: 'white',
+                
+              }}
+            />
+            <button
+              onClick={handleAddFunds}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '78%',
+                transform: 'translateY(-50%)',
+                padding: '5px 10px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: 'green',
+                color: 'white',
+                border: 'none',
+                borderRadius: '15px',
+              }}
+            >
+              Add
+            </button>
+          </div>
+        </div>
+        {/* Save Changes and Back to Homepage */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '250px', marginTop: '40px' }}>
         <button
           onClick={handleProfileUpdate}
           style={{
@@ -2978,10 +2946,155 @@ function UserProfile() {
                   Back 
               </button>
           </div>
+
       </div>
+
+      {/* Vertical Line */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '10px',
+          backgroundColor: 'lightgray',
+        }}
+      ></div>
+
+      {/* Right Section */}
+      <div style={{ flex: 1, paddingLeft: '20px', textAlign: 'center' }}>
+        <h2
+            style={{
+            textAlign: 'center', // Center-align the text
+            marginBottom: '100px', // Add spacing below the text
+            fontSize: '30px', // Font size to match "Hey! {username}"
+            fontWeight: 'bold', // Bold font weight
+            color: 'white', // White text color
+            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+          }}
+        >
+          
+          Edit Profile Color</h2>
+        <div
+          style={{
+            width: '200px',
+            height: '200px',
+            borderRadius: '100%',
+            backgroundColor: userProfile.profileColor,
+            border: '5px solid gray',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '20px auto',
+            fontSize: '70px',
+            fontWeight: 'bold',
+            color: 'white',
+          }}
+        >
+          {userProfile.username.charAt(0).toUpperCase()}
+        </div>
+        {!isEditingColor ? (
+  <button
+    onClick={() => setIsEditingColor(true)}
+    style={{
+      padding: '10px 30px', // Match padding
+      fontSize: '16px', // Match font size
+      cursor: 'pointer',
+      backgroundColor: 'blue', // Match background color
+      color: 'white',
+      border: 'none',
+      borderRadius: '5px',
+      transition: 'all 0.3s ease', // Add smooth transition
+      marginTop: '50px',
+    }}
+    onMouseOver={(e) => {
+      e.target.style.backgroundColor = 'white';
+      e.target.style.color = 'blue';
+    }}
+    onMouseOut={(e) => {
+      e.target.style.backgroundColor = 'blue';
+      e.target.style.color = 'white';
+    }}
+  >
+    Edit
+  </button>
+) : (
+  <div>
+
+    
+    <input
+      type="color"
+      value={selectedColor}
+      onChange={(e) => setSelectedColor(e.target.value)}
+      style={{
+        marginTop: '20px', // Adjust margin to move the box upwards
+        width: '30px', // Set the width of the color box
+        height: '30px', // Set the height of the color box
+        border: 'none', // Remove the border
+        borderRadius: '50%', // Make the box circular
+        cursor: 'pointer', // Change the cursor to a pointer
+        padding: '5px', // Remove padding
+       
+      }}
+    />
+    <button
+      onClick={handleColorUpdate}
+      style={{
+        padding: '10px 20px', // Match padding
+        fontSize: '16px', // Match font size
+        cursor: 'pointer',
+        backgroundColor: 'green', // Match background color
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        transition: 'all 0.3s ease', // Add smooth transition
+        marginTop: '50px', // Add marginTop to match the Edit button
+        marginLeft: '10px',
+        
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'white';
+        e.target.style.color = 'green';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'green';
+        e.target.style.color = 'white';
+      }}
+    >
+      Save
+    </button>
+    <button
+      onClick={() => setIsEditingColor(false)}
+      style={{
+        padding: '10px 20px', // Match padding
+        fontSize: '16px', // Match font size
+        cursor: 'pointer',
+        backgroundColor: 'red', // Match background color
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        transition: 'all 0.3s ease', // Add smooth transition
+        marginTop: '50px', // Add marginTop to match the Edit button
+        marginLeft: '10px',
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'white';
+        e.target.style.color = 'red';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'red';
+        e.target.style.color = 'white';
+      }}
+    >
+      Cancel
+    </button>
+  </div>
+)}
+      </div>
+    </div>
   );
 }
-
 
 function App() {
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
