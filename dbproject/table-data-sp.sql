@@ -39,7 +39,6 @@ CREATE TABLE Reviews (
 CREATE TABLE Cart (
     UserID INT NOT NULL,
     GameID INT NOT NULL,
-    Game_Count INT DEFAULT 0,
     PRIMARY KEY (UserID, GameID), -- Composite Primary Key
     FOREIGN KEY (UserID) REFERENCES [User](User_ID),
     FOREIGN KEY (GameID) REFERENCES Game_Catalogue(Game_ID)
@@ -181,16 +180,18 @@ CREATE PROCEDURE AddToCart
     @GameID INT
 AS
 BEGIN
+    -- Check if the game is already in the cart
     IF EXISTS (SELECT 1 FROM Cart WHERE UserID = @UserID AND GameID = @GameID)
     BEGIN
-        UPDATE Cart
-        SET Game_Count = Game_Count + 1
-        WHERE UserID = @UserID AND GameID = @GameID;
+        -- Return an error message
+        RAISERROR ('The game is already in the cart.', 16, 1);
+        RETURN;
     END
     ELSE
     BEGIN
-        INSERT INTO Cart (UserID, GameID, Game_Count)
-        VALUES (@UserID, @GameID, 1);
+        -- Insert the game into the cart
+        INSERT INTO Cart (UserID, GameID)
+        VALUES (@UserID, @GameID);
     END
 END;
 GO
@@ -261,12 +262,11 @@ GO
 CREATE PROCEDURE AddReview
     @UserID INT,
     @GameID INT,
-    @Comment VARCHAR(500),
-    @CommentDate DATE
+    @Comment VARCHAR(500)
 AS
 BEGIN
     INSERT INTO Reviews (user_ID, game_ID, Comment, Comment_date)
-    VALUES (@UserID, @GameID, @Comment, @CommentDate);
+    VALUES (@UserID, @GameID, @Comment, GETDATE());
 END;
 go
 
@@ -332,8 +332,20 @@ BEGIN
        PRINT 'Error: Amount to add must be greater than zero.';
     END
 END;
+drop procedure GetWalletBalance
+CREATE PROCEDURE GetWalletBalance
+    @UserID INT -- Input parameter for the user ID
+AS
+BEGIN
+    -- Retrieve the wallet balance for the specified user
+    SELECT wallet
+    FROM [User]
+    WHERE User_ID = @UserID;
+END;
+GO
+	
 go
-exec AddFundsToWallet 10,50
+exec GetWalletBalance 10
 -- procedure to remove game from cart
 CREATE PROCEDURE RemoveGameFromCart
     @User_ID INT,
@@ -396,11 +408,10 @@ BEGIN
     -- Select the cart contents for the given user
     SELECT 
         c.GameID,
+		g.discount AS discount,
         g.Title AS Game_Title,
         g.Price AS Game_Price,
-        g.Game_poster AS Game_Poster, -- Include the poster URL
-        c.Game_Count AS Quantity,
-        (g.Price * c.Game_Count) AS Total_Price
+        g.Game_poster AS Game_Poster
     FROM 
         Cart c
     JOIN 
@@ -412,22 +423,94 @@ GO
 go
 -- procedure to remove a review
 CREATE PROCEDURE RemoveReview
-    @User_ID INT,
-    @Game_ID INT
+    @Review_ID INT
 AS
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Reviews WHERE user_ID = @User_ID AND game_ID = @Game_ID)
+    -- Check if the review exists
+    IF NOT EXISTS (SELECT 1 FROM Reviews WHERE Review_ID = @Review_ID)
     BEGIN
-        select 'No review found for the specified game by the user.' as message;
+        SELECT 'No review found with the specified Review_ID.' AS message;
         RETURN;
     END
 
-    DELETE FROM Reviews
-    WHERE user_ID = @User_ID AND game_ID = @Game_ID;
+    -- Delete related rows in ReviewLikes
+    DELETE FROM ReviewLikes
+    WHERE ReviewID = @Review_ID;
 
-    select 'Review removed successfully.' as message;
+    -- Delete the review
+    DELETE FROM Reviews
+    WHERE Review_ID = @Review_ID;
+
+    SELECT 'Review removed successfully.' AS message;
 END;
+GO
+
 go
+CREATE PROCEDURE ViewUserProfile
+    @User_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Check if the user exists
+    IF EXISTS (SELECT 1 FROM [User] WHERE User_ID = @User_ID)
+    BEGIN
+        -- Retrieve the user's profile details
+        SELECT 
+            username,
+			[password],
+            Account_Level,
+            email,
+            date_of_birth,
+            wallet,
+			user_profile_image
+        FROM [User]
+        WHERE User_ID = @User_ID;
+    END
+    ELSE
+    BEGIN
+        -- Return a message if the user is not found
+        SELECT 
+            'User not found' AS message;
+    END
+END;
+
+update [user]
+set user_profile_image = 'DeepPink' where User_ID = 1
+
+go
+update [user]
+set user_profile_image = 'red' where User_ID = 2
+
+go
+update [user]
+set user_profile_image = 'RoyalBlue' where User_ID = 3
+
+go
+update [user]
+set user_profile_image = 'Goldenrod' where User_ID = 4
+
+go
+update [user]
+set user_profile_image = 'DarkOrange' where User_ID = 5
+
+go
+update [user]
+set user_profile_image = 'Crimson' where User_ID = 6
+
+go
+update [user]
+set user_profile_image = 'Teal' where User_ID = 7
+
+go
+update [user]
+set user_profile_image = 'Brown' where User_ID = 8
+
+go
+update [user]
+set user_profile_image = 'ForestGreen' where User_ID = 9
+
+GO
 -- View to view all games
 CREATE VIEW View_All_Games AS 
 SELECT Game_ID, Title, [Description], Game_poster, rating, publisher_id, Price, release_date, discount
@@ -443,6 +526,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT 
+        r.user_ID,
         r.Review_ID,
         r.Comment,
         r.likes,
@@ -505,76 +589,7 @@ BEGIN
 END;
 GO
 
-exec ViewUserProfile @User_ID = 1
-
-drop procedure ViewUserProfile
-go
-CREATE PROCEDURE ViewUserProfile
-    @User_ID INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- Check if the user exists
-    IF EXISTS (SELECT 1 FROM [User] WHERE User_ID = @User_ID)
-    BEGIN
-        -- Retrieve the user's profile details
-        SELECT 
-            username,
-			[password],
-            Account_Level,
-            email,
-            date_of_birth,
-            wallet,
-			user_profile_image
-        FROM [User]
-        WHERE User_ID = @User_ID;
-    END
-    ELSE
-    BEGIN
-        -- Return a message if the user is not found
-        SELECT 
-            'User not found' AS message;
-    END
-END;
-
 use project
-
-update [user]
-set user_profile_image = 'DeepPink' where User_ID = 1
-
-go
-update [user]
-set user_profile_image = 'red' where User_ID = 2
-
-go
-update [user]
-set user_profile_image = 'RoyalBlue' where User_ID = 3
-
-go
-update [user]
-set user_profile_image = 'Goldenrod' where User_ID = 4
-
-go
-update [user]
-set user_profile_image = 'DarkOrange' where User_ID = 5
-
-go
-update [user]
-set user_profile_image = 'Crimson' where User_ID = 6
-
-go
-update [user]
-set user_profile_image = 'Teal' where User_ID = 7
-
-go
-update [user]
-set user_profile_image = 'Brown' where User_ID = 8
-
-go
-update [user]
-set user_profile_image = 'ForestGreen' where User_ID = 9
-
 
 -- Inserting Users
 INSERT INTO [User] (username, password, email, date_of_birth, wallet, account_level, user_profile_image) VALUES
@@ -608,7 +623,17 @@ INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_i
 ('The Last of Us Part II', 'A gripping narrative-driven survival game.', 'tlou2.jpg', 10, 8, 59.99, '2020-06-19', 5),
 ('Super Mario Odyssey', 'A colorful platformer featuring Mario’s globe-trotting adventure.', 'mario_odyssey.jpg', 10, 9, 49.99, '2017-10-27', 10);
 
-
+INSERT INTO Game_Catalogue (Title, Description, Game_poster, rating, publisher_id, Price, release_date, discount) VALUES
+('Starfield', 'Explore the galaxy in Bethesda’s new open-world space RPG.', 'starfield.jpg', 8, 4, 69.99, '2023-09-06', 10),
+('Death Stranding', 'A mysterious and atmospheric journey across a fractured world.', 'death_stranding.jpg', 8, 11, 49.99, '2019-11-08', 30),
+('Resident Evil Village', 'Face gothic horror in the latest installment of the Resident Evil saga.', 're_village.jpg', 9, 1, 59.99, '2021-05-07', 25),
+('Ghost of Tsushima', 'An open-world samurai action game set during the Mongol invasion.', 'ghost_tsushima.jpg', 10, 2, 59.99, '2020-07-17', 20),
+('Returnal', 'A sci-fi third-person shooter with roguelike elements.', 'returnal.jpg', 8, 2, 69.99, '2021-04-30', 15),
+('It Takes Two', 'A unique co-op adventure about love and teamwork.', 'it_takes_two.jpg', 9, 11, 39.99, '2021-03-26', 20),
+('Baldur''s Gate 3', 'A deep fantasy RPG based on Dungeons & Dragons.', 'bg3.jpg', 10, 10, 59.99, '2023-08-03', 10),
+('Metroid Dread', 'Samus Aran returns in a high-speed 2D platformer.', 'metroid_dread.jpg', 9, 3, 59.99, '2021-10-08', 10),
+('Splatoon 3', 'Team up in colorful, fast-paced online ink battles.', 'splatoon3.jpg', 8, 3, 59.99, '2022-09-09', 5),
+('Alan Wake II', 'A psychological horror sequel with mind-bending storytelling.', 'alan_wake_2.jpg', 9, 5, 59.99, '2023-10-27', 10);
 
 -- Inserting Reviews
 INSERT INTO Reviews (user_ID, game_ID, Comment, Comment_date, likes) VALUES
@@ -722,17 +747,18 @@ EXEC RemoveGameFromCart @User_ID = 1, @Game_ID = 10;
 EXEC ViewPurchaseHistory @User_ID = 1;
 
 -- test procedure to remove a review
-EXEC RemoveReview @User_ID = 1, @Game_ID = 1;
+EXEC RemoveReview @Review_ID = 1;
 
 -- test view to view all games
 select * from View_All_Games
+
 
 select * from Game_Catalogue
 select * from [User]
 select * from System_Requirements
 select * from Library
-select * from Cart 
-select * from Reviews 
+select * from Cart where USERID = 1;
+select * from Reviews where user_id = 1
 
 drop table [User]
 drop table Game_Catalogue
