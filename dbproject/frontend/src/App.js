@@ -2579,6 +2579,22 @@ function UserProfile() {
 
   // Handle profile updates
   const handleProfileUpdate = async () => {
+
+     // Validation: Ensure username, email, and password are not blank
+  if (!userProfile.username.trim() || !userProfile.email.trim() || !userProfile.password.trim()) {
+    setNotification({ message: 'Username, email, and password cannot be blank.', type: 'red' });
+    setTimeout(() => setNotification(null), 3000);
+    return; // Stop further execution if validation fails
+  }
+
+   // Validation: Ensure email contains "@gmail.com"
+  if (!userProfile.email.includes('@gmail.com')) {
+    setNotification({ message: 'Email must include @gmail.com.', type: 'red' });
+    setTimeout(() => setNotification(null), 3000);
+    return; // Stop further execution if validation fails
+  }
+
+
     try {
       const response = await fetch('http://localhost:5000/api/user/profile', {
         method: 'PUT',
@@ -2590,6 +2606,10 @@ function UserProfile() {
           newPassword: userProfile.password,
         }),
       });
+
+      if (!response.ok) {
+      throw new Error('Failed to update profile');
+    }
       const data = await response.json();
       setNotification({ message: data.message, type: 'blue' });
 
@@ -2598,11 +2618,14 @@ function UserProfile() {
       }, 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
+    setNotification({ message: 'Error updating profile.', type: 'red' });
+    setTimeout(() => setNotification(null), 3000);
     }
   };
 
   // Handle adding funds to wallet
   const handleAddFunds = async () => {
+    
     try {
       const response = await fetch('http://localhost:5000/api/user/wallet', {
         method: 'POST',
@@ -2866,6 +2889,11 @@ function UserProfile() {
               onFocus={() => setNewFunds('')}
               onBlur={(e) => setNewFunds(e.target.value === '' ? 0 : Number(e.target.value))}
               onChange={(e) => setNewFunds(Number(e.target.value))}
+               onKeyPress={(e) => {
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault(); // Prevent non-numeric input
+    }
+  }}
               style={{
                 width: '100%',
                 padding: '10px',
