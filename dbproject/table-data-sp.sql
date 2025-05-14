@@ -11,7 +11,6 @@ CREATE TABLE [User](
     account_level int DEFAULT 0,
     user_profile_image VARCHAR(255) Default 'Teal'
 );
-
 CREATE TABLE Game_Catalogue (
     Game_ID INT IDENTITY(1,1) PRIMARY KEY,
     Title VARCHAR(255) NOT NULL,

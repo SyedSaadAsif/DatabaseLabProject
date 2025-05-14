@@ -1433,7 +1433,17 @@ function Cart() {
             borderRadius: '10px',
           }}
         />
-        <h3 style={{ margin: '10px 0', fontSize: '18px', color: 'White' }}>{item.Game_Title}</h3>
+        <h3
+          style={{
+            margin: '10px 0',
+            fontSize: '16px',
+            color: 'white',
+            height: '40px', // Limit the height of the title container
+            textOverflow: 'ellipsis', // Add ellipsis for truncated text
+          }}
+        >
+          {item.Game_Title}
+        </h3>
         <p style={{ margin: '5px 0', fontSize: '16px', color: 'white' }}>
                 Price: $
                 {item.discount > 0
